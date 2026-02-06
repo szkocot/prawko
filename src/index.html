@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://*.backblazeb2.com; media-src 'self' https://*.backblazeb2.com; connect-src 'self' https://*.backblazeb2.com; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://*.backblazeb2.com; media-src 'self' https://*.backblazeb2.com; connect-src 'self' https://*.backblazeb2.com; object-src 'none'; base-uri 'self'; form-action 'none';">
   <meta name="description" content="Prawko — aplikacja do nauki pytań egzaminacyjnych na prawo jazdy. Wszystkie 3719 oficjalnych pytań.">
   <title>Prawko — Egzamin na prawo jazdy</title>
   <link rel="manifest" href="manifest.json">
@@ -12,6 +12,12 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+
+  <svg style="position:absolute;width:0;height:0" aria-hidden="true">
+    <filter id="noise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+    </filter>
+  </svg>
 
   <main id="app">
 
