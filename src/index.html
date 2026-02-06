@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1a365d">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://*.backblazeb2.com; media-src 'self' https://*.backblazeb2.com; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'; frame-ancestors 'none';">
+  <meta name="description" content="Prawko — aplikacja do nauki pytań egzaminacyjnych na prawo jazdy. Wszystkie 3719 oficjalnych pytań.">
+  <title>Prawko — Egzamin na prawo jazdy</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <main id="app">
+
+    <div class="top-controls">
+      <button class="theme-btn" aria-label="Toggle dark mode">
+        <span class="theme-icon">🌙</span>
+      </button>
+      <div class="lang-toggle">
+        <button class="lang-btn active" data-lang="pl">PL</button>
+        <button class="lang-btn" data-lang="en">EN</button>
+      </div>
+    </div>
+
+    <!-- ===== 1. LANDING PAGE ===== -->
+    <section id="home" class="screen active">
+      <header class="hero">
+        <h1 class="hero-title">Prawko</h1>
+        <p class="hero-tagline" data-i18n="tagline">Wszystkie 3719 oficjalnych pytań egzaminacyjnych</p>
+      </header>
+
+      <div class="features">
+        <div class="feature-card">
+          <span class="feature-icon" aria-hidden="true">📖</span>
+          <h3 data-i18n="featureLearn">Tryb nauki</h3>
+          <p data-i18n="featureLearnDesc">Ucz się we własnym tempie z natychmiastową informacją zwrotną</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon" aria-hidden="true">🎓</span>
+          <h3 data-i18n="featureExam">Symulacja egzaminu</h3>
+          <p data-i18n="featureExamDesc">Realistyczna symulacja z limitem czasu i punktacją</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon" aria-hidden="true">🏷️</span>
+          <h3 data-i18n="featureCategories">12 kategorii</h3>
+          <p data-i18n="featureCategoriesDesc">A, A1, A2, AM, B, B1, C, C1, D, D1, PT, T</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon" aria-hidden="true">🎬</span>
+          <h3 data-i18n="featureMedia">Multimedia</h3>
+          <p data-i18n="featureMediaDesc">Zdjęcia i filmy wideo dołączone do pytań</p>
+        </div>
+        <div class="feature-card">
+          <span class="feature-icon" aria-hidden="true">📴</span>
+          <h3 data-i18n="featureOffline">Tryb offline</h3>
+          <p data-i18n="featureOfflineDesc">Działaj bez internetu dzięki technologii PWA</p>
+        </div>
+      </div>
+
+      <div class="exam-info">
+        <h2 data-i18n="examRules">Zasady egzaminu</h2>
+        <ul>
+          <li><strong data-i18n="examRule1">32 pytania</strong> <span data-i18n="examRule1Desc">— 20 z wiedzy podstawowej + 12 specjalistycznych</span></li>
+          <li><strong data-i18n="examRule2">25 minut</strong> <span data-i18n="examRule2Desc">— łączny czas na rozwiązanie testu</span></li>
+          <li><strong data-i18n="examRule3">68 z 74 pkt</strong> <span data-i18n="examRule3Desc">— minimum do zdania egzaminu</span></li>
+        </ul>
+      </div>
+
+      <nav class="home-nav">
+        <button class="btn btn-primary" data-navigate="categories" data-i18n="start">Rozpocznij</button>
+        <a href="#zrodlo-danych" class="btn btn-link" data-navigate="zrodlo-danych" data-i18n="dataSource">Źródło danych</a>
+      </nav>
+
+      <footer class="app-footer">
+        <p data-i18n="copyright">&copy; 2025 Prawko</p>
+        <p class="footer-attribution"><span data-i18n="attribution">Pytania na podstawie oficjalnej bazy</span> <a href="https://www.gov.pl/web/infrastruktura/prawo-jazdy" target="_blank" rel="noopener" data-i18n="ministryName">Ministerstwa Infrastruktury</a></p>
+      </footer>
+    </section>
+
+    <!-- ===== 2. CATEGORY & MODE SELECTOR ===== -->
+    <section id="categories" class="screen">
+      <header class="screen-header">
+        <button class="btn btn-back" data-navigate="home" data-i18n="back">&#8592; Powrót</button>
+        <h2 data-i18n="chooseCategory">Wybierz kategorię</h2>
+      </header>
+
+      <div class="mode-toggle">
+        <button class="mode-btn active" data-mode="learn" data-i18n="modeLearn">Nauka</button>
+        <button class="mode-btn" data-mode="exam" data-i18n="modeExam">Egzamin</button>
+      </div>
+
+      <div class="category-grid">
+        <button class="category-card" data-category="A">
+          <span class="category-letter">A</span>
+          <span class="category-name" data-i18n="categoryA">Motocykl</span>
+          <span class="question-count"></span>
+        </button>
+        <button class="category-card" data-category="A1">
+          <span class="category-letter">A1</span>
+          <span class="category-name" data-i18n="categoryA1">Motocykl 125</span>
+          <span class="question-count"></span>
+        </button>
+        <button class="category-card" data-category="A2">
+          <span class="category-letter">A2</span>
+          <span class="category-name" data-i18n="categoryA2">Motocykl 35kW</span>
+          <span class="question-count"></span>
+        </button>
+        <button class="category-card" data-category="AM">
+          <span class="category-letter">AM</span>
+          <span class="category-name" data-i18n="categoryAM">Motorower</span>
+          <span class="question-count"></span>
+        </button>
+        <button class="category-card" data-category="B">
+          <span class="category-letter">B</span>
+          <span class="category-name" data-i18n="categoryB">Samochód osobowy</span>
+          <span class="question-count"></span>
+        </button>
+        <button class="category-card" data-category="B1">
+          <span class="category-letter">B1</span>
+          <span class="category-name" data-i18n="categoryB1">Czterokołowiec</span>
+          <span class="question-count"></span>
+        </button>
+        <button class="category-card" data-category="C">
+          <span class="category-letter">C</span>
+          <span class="category-name" data-i18n="categoryC">Samochód ciężarowy</span>
+          <span class="question-count"></span>
+        </button>
+        <button class="category-card" data-category="C1">
+          <span class="category-letter">C1</span>
+          <span class="category-name" data-i18n="categoryC1">Ciężarowy do 7.5t</span>
+          <span class="question-count"></span>
+        </button>
+        <button class="category-card" data-category="D">
+          <span class="category-letter">D</span>
+          <span class="category-name" data-i18n="categoryD">Autobus</span>
+          <span class="question-count"></span>
+        </button>
+        <button class="category-card" data-category="D1">
+          <span class="category-letter">D1</span>
+          <span class="category-name" data-i18n="categoryD1">Autobus do 17 osób</span>
+          <span class="question-count"></span>
+        </button>
+        <button class="category-card" data-category="PT">
+          <span class="category-letter">PT</span>
+          <span class="category-name" data-i18n="categoryPT">Tramwaj</span>
+          <span class="question-count"></span>
+        </button>
+        <button class="category-card" data-category="T">
+          <span class="category-letter">T</span>
+          <span class="category-name" data-i18n="categoryT">Ciągnik rolniczy</span>
+          <span class="question-count"></span>
+        </button>
+      </div>
+    </section>
+
+    <!-- ===== 3. QUIZ SCREEN ===== -->
+    <section id="quiz" class="screen">
+      <header class="quiz-header">
+        <div class="timer-display">
+          <div class="timer-block">
+            <span class="timer-label" data-i18n="questionTimer">Pytanie</span>
+            <span class="question-timer">00:00</span>
+          </div>
+          <span class="timer-separator">|</span>
+          <div class="timer-block">
+            <span class="timer-label" data-i18n="totalTimer">Razem</span>
+            <span class="total-timer">00:00</span>
+          </div>
+        </div>
+        <span class="question-progress" aria-live="polite">1 / 32</span>
+      </header>
+
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+
+      <article class="question-card">
+        <div class="media-area"></div>
+        <p class="question-text" aria-live="polite"></p>
+      </article>
+
+      <div class="answers" role="group" aria-label="Answers"></div>
+
+      <div class="quiz-actions">
+        <div class="learn-nav">
+          <button class="btn btn-secondary btn-prev" data-i18n="prev">Poprzednie</button>
+          <button class="btn btn-secondary btn-next" data-i18n="next">Następne</button>
+        </div>
+        <button class="btn btn-danger btn-end-exam" data-i18n="endExam">Zakończ egzamin</button>
+      </div>
+    </section>
+
+    <!-- ===== 4. RESULTS SCREEN ===== -->
+    <section id="results" class="screen">
+      <header class="screen-header">
+        <h2 data-i18n="examResult">Wynik egzaminu</h2>
+      </header>
+
+      <div class="score-circle">
+        <span class="score-value">0</span>
+        <span class="score-max">/ 74</span>
+      </div>
+
+      <p class="result-verdict"></p>
+
+      <table class="score-breakdown">
+        <thead>
+          <tr>
+            <th data-i18n="part">Część</th>
+            <th data-i18n="scored">Uzyskane</th>
+            <th data-i18n="maximum">Maksimum</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-i18n="basicQuestions">Pytania podstawowe</td>
+            <td class="basic-score">0</td>
+            <td>46</td>
+          </tr>
+          <tr>
+            <td data-i18n="specialistQuestions">Pytania specjalistyczne</td>
+            <td class="specialist-score">0</td>
+            <td>28</td>
+          </tr>
+          <tr class="total-row">
+            <td><strong data-i18n="total">Razem</strong></td>
+            <td class="total-score"><strong>0</strong></td>
+            <td><strong>74</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="incorrect-list">
+        <h3 data-i18n="incorrectAnswers">Błędne odpowiedzi</h3>
+      </div>
+
+      <nav class="results-nav">
+        <button class="btn btn-primary btn-retry" data-i18n="retry">Spróbuj ponownie</button>
+        <button class="btn btn-secondary" data-navigate="categories" data-i18n="backToCategories">Powrót do kategorii</button>
+      </nav>
+    </section>
+
+    <!-- ===== 5. DATA SOURCE PAGE ===== -->
+    <section id="zrodlo-danych" class="screen">
+      <header class="screen-header">
+        <button class="btn btn-back" data-navigate="home" data-i18n="back">&#8592; Powrót</button>
+        <h2 data-i18n="dataSourceTitle">Źródło danych</h2>
+      </header>
+
+      <div class="source-content">
+        <p><span data-i18n="dataSourceIntro">Pytania egzaminacyjne wykorzystane w tej aplikacji pochodzą z oficjalnej bazy danych udostępnionej przez</span> <strong data-i18n="dataSourceMinistry">Ministerstwo Infrastruktury</strong> <span data-i18n="dataSourceCountry">Rzeczypospolitej Polskiej.</span></p>
+
+        <p>
+          <a href="https://www.gov.pl/web/infrastruktura/prawo-jazdy" target="_blank" rel="noopener">
+            gov.pl/web/infrastruktura/prawo-jazdy
+          </a>
+        </p>
+
+        <div class="license-section">
+          <h3 data-i18n="licenseQuestions">Treść pytań egzaminacyjnych</h3>
+          <p data-i18n="licenseQuestionsDesc">Udostępnione na licencji Creative Commons Uznanie autorstwa - Na tych samych warunkach 4.0 Międzynarodowe.</p>
+          <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener" class="license-badge">CC BY-SA 4.0</a>
+        </div>
+
+        <div class="license-section">
+          <h3 data-i18n="licenseMedia">Materiały audiowizualne</h3>
+          <p data-i18n="licenseMediaDesc">Udostępnione na licencji Creative Commons Uznanie autorstwa - Użycie niekomercyjne - Bez utworów zależnych 4.0 Międzynarodowe.</p>
+          <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" target="_blank" rel="noopener" class="license-badge">CC BY-NC-ND 4.0</a>
+        </div>
+
+        <p class="disclaimer" data-i18n="nonCommercial">Aplikacja ma charakter niekomercyjny i edukacyjny.</p>
+      </div>
+    </section>
+
+    <!-- ===== 6. CONFIRM EXIT MODAL ===== -->
+    <div id="confirm-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-content">
+        <h3 id="modal-title" data-i18n="confirmExit">Czy na pewno chcesz zakończyć?</h3>
+        <p data-i18n="confirmExitDesc">Twój postęp nie zostanie zapisany.</p>
+        <div class="modal-actions">
+          <button class="btn btn-danger btn-confirm-end" data-i18n="confirmYes">Tak, zakończ</button>
+          <button class="btn btn-secondary btn-cancel-end" data-i18n="confirmNo">Nie, kontynuuj</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

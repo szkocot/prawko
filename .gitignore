@@ -1,0 +1,23 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Source data (not deployed)
+*.xlsx
+Pytania egzaminacyjne na prawo jazdy 2025/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Media (hosted on Backblaze B2, not in git)
+src/media/img/
+src/media/vid/
+
+# Claude
+.claude/
