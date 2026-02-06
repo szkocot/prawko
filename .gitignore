@@ -19,5 +19,14 @@ venv/
 src/media/img/
 src/media/vid/
 
+# Node / Playwright
+node_modules/
+test-results/
+playwright-report/
+package.json
+package-lock.json
+playwright.config.js
+tests/
+
 # Claude
 .claude/

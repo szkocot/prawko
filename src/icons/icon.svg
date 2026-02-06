@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#1a365d"/>
-  <path d="M128 340 L256 220 L384 340" stroke="#f7fafc" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-  <rect x="232" y="260" width="48" height="120" rx="8" fill="#f7fafc"/>
-  <text x="256" y="200" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="bold" font-size="180" fill="#f7fafc">P</text>
-  <path d="M100 400 Q256 360 412 400" stroke="#4299e1" stroke-width="20" stroke-linecap="round" fill="none"/>
-  <circle cx="180" cy="420" r="16" fill="#f7fafc" opacity="0.6"/>
-  <circle cx="256" cy="410" r="16" fill="#f7fafc" opacity="0.6"/>
-  <circle cx="332" cy="420" r="16" fill="#f7fafc" opacity="0.6"/>
+  <rect width="512" height="512" rx="96" fill="#6366f1"/>
+  <path d="M128 340 L256 220 L384 340" stroke="#fafaf9" stroke-width="32" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <rect x="232" y="260" width="48" height="120" rx="8" fill="#fafaf9"/>
+  <text x="256" y="200" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="bold" font-size="180" fill="#fafaf9">P</text>
+  <path d="M100 400 Q256 360 412 400" stroke="#a5b4fc" stroke-width="20" stroke-linecap="round" fill="none"/>
+  <circle cx="180" cy="420" r="16" fill="#fafaf9" opacity="0.6"/>
+  <circle cx="256" cy="410" r="16" fill="#fafaf9" opacity="0.6"/>
+  <circle cx="332" cy="420" r="16" fill="#fafaf9" opacity="0.6"/>
 </svg>

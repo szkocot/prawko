@@ -4,8 +4,8 @@
   "description": "Wszystkie 3719 oficjalnych pytań egzaminacyjnych na prawo jazdy",
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#1a365d",
-  "background_color": "#f7fafc",
+  "theme_color": "#6366f1",
+  "background_color": "#faf9f7",
   "lang": "pl",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
