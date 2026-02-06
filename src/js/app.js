@@ -4,7 +4,8 @@ import { fetchMeta, fetchCategory } from './data.js';
 import { startExam, setupExamListeners, cleanupExam, getLastExamCategory } from './exam.js';
 import { startLearn, setupLearnListeners, cleanupLearn } from './learn.js';
 import { showScreen, renderCategories, applyLanguage } from './ui.js';
-import { setLang, getLang, loadQuestionTranslations } from './i18n.js';
+import { setLang, getLang, loadQuestionTranslations, t } from './i18n.js';
+import { downloadCategoryMedia, getDownloadedCategories } from './offline.js';
 
 let meta = null;
 let currentMode = 'learn'; // 'learn' or 'exam'
@@ -46,7 +47,7 @@ function handleRoute() {
     return;
   }
 
-  if (hash === 'categories' && meta) renderCategories(meta);
+  if (hash === 'categories' && meta) renderCategories(meta, getDownloadedCategories());
   showScreen(hash);
 }
 
@@ -74,7 +75,7 @@ async function init() {
   // Load metadata
   try {
     meta = await fetchMeta();
-    renderCategories(meta);
+    renderCategories(meta, getDownloadedCategories());
   } catch {
     document.getElementById('app').textContent = 'Failed to load app data. Please refresh.';
     return;
@@ -151,9 +152,36 @@ async function init() {
       btn.classList.add('active');
       setLang(lang);
       applyLanguage();
-      renderCategories(meta);
+      renderCategories(meta, getDownloadedCategories());
       if (lang === 'en') await loadQuestionTranslations();
     });
+  });
+
+  // Offline download handler
+  document.querySelector('.category-grid').addEventListener('click', async (e) => {
+    const dlBtn = e.target.closest('.offline-btn');
+    if (!dlBtn) return;
+    e.stopPropagation();
+    e.preventDefault();
+
+    const catId = dlBtn.dataset.category;
+    if (dlBtn.classList.contains('downloaded') || dlBtn.classList.contains('downloading')) return;
+
+    dlBtn.classList.add('downloading');
+    dlBtn.textContent = '\u2193 0%';
+
+    try {
+      await downloadCategoryMedia(catId, (done, total) => {
+        const pct = Math.round((done / total) * 100);
+        dlBtn.textContent = `\u2193 ${pct}%`;
+      });
+      dlBtn.classList.remove('downloading');
+      dlBtn.classList.add('downloaded');
+      dlBtn.textContent = `\u2713 ${t('savedOffline')}`;
+    } catch {
+      dlBtn.classList.remove('downloading');
+      dlBtn.textContent = `\u2193 ${t('saveOffline')}`;
+    }
   });
 
   // Setup exam and learn listeners

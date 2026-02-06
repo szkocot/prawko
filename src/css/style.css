@@ -553,6 +553,43 @@ footer a {
   color: var(--danger);
 }
 
+/* Offline download button */
+.offline-btn {
+  margin-top: 8px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-align: center;
+  transition: color 0.2s, background 0.2s;
+  cursor: pointer;
+}
+
+.offline-btn:hover {
+  color: var(--primary);
+  background: rgba(74, 144, 217, 0.08);
+}
+
+.offline-btn.downloading {
+  color: var(--accent-warm);
+  cursor: wait;
+}
+
+.offline-btn.downloaded {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(56, 161, 105, 0.06);
+  cursor: default;
+}
+
+.offline-btn.downloaded:hover {
+  color: var(--accent);
+  background: rgba(56, 161, 105, 0.06);
+}
+
 /* ==========================================================================
    #quiz — Quiz / Learning Screen
    ========================================================================== */

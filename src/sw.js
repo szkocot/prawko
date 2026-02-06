@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'prawko-v1';
+const CACHE_VERSION = 'prawko-v2';
 const APP_SHELL_CACHE = CACHE_VERSION + '-shell';
 const DATA_CACHE = CACHE_VERSION + '-data';
 const MEDIA_CACHE = CACHE_VERSION + '-media';
@@ -15,6 +15,7 @@ const APP_SHELL = [
   './js/timer.js',
   './js/stats.js',
   './js/i18n.js',
+  './js/offline.js',
   './data/meta.json',
   './manifest.json'
 ];

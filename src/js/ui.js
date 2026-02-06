@@ -21,7 +21,7 @@ export function hideModal() {
   document.getElementById('confirm-modal').classList.remove('active');
 }
 
-export function renderCategories(meta) {
+export function renderCategories(meta, downloadedSet = new Set()) {
   meta.categories.forEach(cat => {
     const card = document.querySelector(`.category-card[data-category="${CSS.escape(cat.id)}"]`);
     if (!card) return;
@@ -60,6 +60,20 @@ export function renderCategories(meta) {
       badge.className = `exam-badge ${examStats.passed > 0 ? 'pass' : 'fail'}`;
       badge.textContent = examStats.passed > 0 ? t('passed') : `${examStats.lastScore}/74`;
       progressEl.appendChild(badge);
+    }
+
+    // Offline download button
+    let dlBtn = card.querySelector('.offline-btn');
+    if (!dlBtn) {
+      dlBtn = document.createElement('div');
+      dlBtn.className = 'offline-btn';
+      dlBtn.dataset.category = cat.id;
+      card.appendChild(dlBtn);
+    }
+    if (!dlBtn.classList.contains('downloading')) {
+      const isDl = downloadedSet.has(cat.id);
+      dlBtn.classList.toggle('downloaded', isDl);
+      dlBtn.textContent = isDl ? `\u2713 ${t('savedOffline')}` : `\u2193 ${t('saveOffline')}`;
     }
   });
 }

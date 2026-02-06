@@ -1,5 +1,7 @@
 # 🚗 Prawko — Egzamin na prawo jazdy
 
+**https://szkocot.github.io/prawko/**
+
 Aplikacja webowa (PWA) do nauki i symulacji egzaminu na prawo jazdy w Polsce. Zawiera wszystkie 3719 oficjalnych pytań egzaminacyjnych z bazy Ministerstwa Infrastruktury.
 
 ## Funkcje
@@ -60,6 +62,8 @@ https://www.gov.pl/web/infrastruktura/prawo-jazdy
 ---
 
 # 🚗 Prawko — Polish Driving License Exam
+
+**https://szkocot.github.io/prawko/**
 
 A PWA web app for Polish driving license exam preparation. Contains all 3,719 official exam questions from the Ministry of Infrastructure database.
 

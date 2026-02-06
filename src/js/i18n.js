@@ -80,6 +80,8 @@ const translations = {
     imgAlt: 'Ilustracja do pytania',
     questionTimer: 'Pytanie',
     totalTimer: 'Razem',
+    saveOffline: 'Pobierz offline',
+    savedOffline: 'Dostępne offline',
   },
   en: {
     appName: 'Prawko',
@@ -160,6 +162,8 @@ const translations = {
     imgAlt: 'Question illustration',
     questionTimer: 'Question',
     totalTimer: 'Total',
+    saveOffline: 'Save offline',
+    savedOffline: 'Available offline',
   },
 };
 
