@@ -169,17 +169,21 @@ async function init() {
 
     dlBtn.classList.add('downloading');
     dlBtn.textContent = '\u2193 0%';
+    dlBtn.style.setProperty('--dl-progress', '0');
 
     try {
       await downloadCategoryMedia(catId, (done, total) => {
         const pct = Math.round((done / total) * 100);
         dlBtn.textContent = `\u2193 ${pct}%`;
+        dlBtn.style.setProperty('--dl-progress', String(pct));
       });
       dlBtn.classList.remove('downloading');
       dlBtn.classList.add('downloaded');
+      dlBtn.style.removeProperty('--dl-progress');
       dlBtn.textContent = `\u2713 ${t('savedOffline')}`;
     } catch {
       dlBtn.classList.remove('downloading');
+      dlBtn.style.removeProperty('--dl-progress');
       dlBtn.textContent = `\u2193 ${t('saveOffline')}`;
     }
   });

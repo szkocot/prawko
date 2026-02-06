@@ -576,6 +576,12 @@ footer a {
 .offline-btn.downloading {
   color: var(--accent-warm);
   cursor: wait;
+  background: linear-gradient(
+    to right,
+    rgba(56, 161, 105, 0.15) calc(var(--dl-progress, 0) * 1%),
+    var(--bg) calc(var(--dl-progress, 0) * 1%)
+  );
+  transition: none;
 }
 
 .offline-btn.downloaded {
