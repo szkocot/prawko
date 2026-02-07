@@ -65,8 +65,7 @@ export async function downloadCategoryMedia(categoryId, onProgress) {
 
     const batch = mediaUrls.slice(i, i + BATCH);
     const results = await Promise.allSettled(batch.map(async (url) => {
-      const resp = await fetch(url, { signal: controller.signal });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      await fetch(url, { mode: 'no-cors', signal: controller.signal });
     }));
 
     for (const r of results) {

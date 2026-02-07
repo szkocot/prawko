@@ -70,7 +70,7 @@ self.addEventListener('fetch', (event) => {
         cache.match(event.request).then((cached) => {
           if (cached) return cached;
           return fetch(event.request).then((response) => {
-            if (response.ok) {
+            if (response.ok || response.type === 'opaque') {
               cache.put(event.request, response.clone()).then(() =>
                 cache.keys().then((keys) => {
                   if (keys.length > MEDIA_CACHE_LIMIT) {
