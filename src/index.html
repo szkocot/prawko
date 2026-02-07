@@ -25,7 +25,7 @@
       <button class="theme-btn" aria-label="Toggle dark mode">
         <span class="theme-icon">🌙</span>
       </button>
-      <div class="lang-toggle">
+      <div class="lang-toggle" role="radiogroup" aria-label="Wybór języka">
         <button class="lang-btn active" data-lang="pl">PL</button>
         <button class="lang-btn" data-lang="en">EN</button>
       </div>
@@ -37,6 +37,11 @@
         <h1 class="hero-title">Prawko</h1>
         <p class="hero-tagline" data-i18n="tagline">Wszystkie 3719 oficjalnych pytań egzaminacyjnych</p>
       </header>
+
+      <nav class="home-nav">
+        <button class="btn btn-primary" data-navigate="categories" data-i18n="start">Rozpocznij</button>
+        <a href="#zrodlo-danych" class="btn btn-link" data-navigate="zrodlo-danych" data-i18n="dataSource">Źródło danych</a>
+      </nav>
 
       <div class="features">
         <div class="feature-card">
@@ -74,11 +79,6 @@
           <li><strong data-i18n="examRule3">68 z 74 pkt</strong> <span data-i18n="examRule3Desc">— minimum do zdania egzaminu</span></li>
         </ul>
       </div>
-
-      <nav class="home-nav">
-        <button class="btn btn-primary" data-navigate="categories" data-i18n="start">Rozpocznij</button>
-        <a href="#zrodlo-danych" class="btn btn-link" data-navigate="zrodlo-danych" data-i18n="dataSource">Źródło danych</a>
-      </nav>
 
       <footer class="app-footer">
         <p data-i18n="copyright">&copy; 2025 Prawko</p>
@@ -165,15 +165,16 @@
     <!-- ===== 3. QUIZ SCREEN ===== -->
     <section id="quiz" class="screen">
       <header class="quiz-header">
+        <button class="btn btn-back quiz-back" data-navigate="categories" data-i18n="back">&#8592; Powrót</button>
         <div class="timer-display">
           <div class="timer-block">
             <span class="timer-label" data-i18n="questionTimer">Pytanie</span>
-            <span class="question-timer">00:00</span>
+            <span class="question-timer" aria-label="Czas na pytanie">00:00</span>
           </div>
           <span class="timer-separator">|</span>
           <div class="timer-block">
             <span class="timer-label" data-i18n="totalTimer">Razem</span>
-            <span class="total-timer">00:00</span>
+            <span class="total-timer" aria-label="Czas egzaminu">00:00</span>
           </div>
         </div>
         <span class="question-progress" aria-live="polite">1 / 32</span>
@@ -183,12 +184,12 @@
         <div class="progress-fill"></div>
       </div>
 
-      <article class="question-card">
+      <article class="question-card" aria-label="Pytanie egzaminacyjne">
         <div class="media-area"></div>
         <p class="question-text" aria-live="polite"></p>
       </article>
 
-      <div class="answers" role="group" aria-label="Answers"></div>
+      <div class="answers" role="group" aria-label="Answers" aria-live="polite"></div>
 
       <div class="quiz-actions">
         <div class="learn-nav">
@@ -202,6 +203,7 @@
     <!-- ===== 4. RESULTS SCREEN ===== -->
     <section id="results" class="screen">
       <header class="screen-header">
+        <button class="btn btn-back" data-navigate="categories" data-i18n="backToCategories">&#8592; Powrót do kategorii</button>
         <h2 data-i18n="examResult">Wynik egzaminu</h2>
       </header>
 

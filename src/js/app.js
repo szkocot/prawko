@@ -1,8 +1,8 @@
 // app.js — Router, initialization, and event wiring
 
 import { fetchMeta, fetchCategory } from './data.js';
-import { startExam, setupExamListeners, cleanupExam, getLastExamCategory } from './exam.js';
-import { startLearn, setupLearnListeners, cleanupLearn } from './learn.js';
+import { startExam, setupExamListeners, cleanupExam, getLastExamCategory, refreshExamQuestion } from './exam.js';
+import { startLearn, setupLearnListeners, cleanupLearn, refreshLearnQuestion } from './learn.js';
 import { showScreen, renderCategories, applyLanguage } from './ui.js';
 import { setLang, getLang, loadQuestionTranslations, t } from './i18n.js';
 import { downloadCategoryMedia, getDownloadedCategories } from './offline.js';
@@ -154,6 +154,11 @@ async function init() {
       applyLanguage();
       renderCategories(meta, getDownloadedCategories());
       if (lang === 'en') await loadQuestionTranslations();
+      // Re-render current question if on quiz screen
+      if (document.getElementById('quiz').classList.contains('active')) {
+        refreshLearnQuestion();
+        refreshExamQuestion();
+      }
     });
   });
 

@@ -17,7 +17,20 @@ function saveDownloaded(set) {
   try { localStorage.setItem(DOWNLOAD_KEY, JSON.stringify([...set])); } catch {}
 }
 
+let activeController = null;
+
+export function cancelDownload() {
+  if (activeController) {
+    activeController.abort();
+    activeController = null;
+  }
+}
+
 export async function downloadCategoryMedia(categoryId, onProgress) {
+  cancelDownload();
+  const controller = new AbortController();
+  activeController = controller;
+
   const data = await fetchCategory(categoryId);
   const seen = new Set();
   const mediaUrls = [];
@@ -34,23 +47,53 @@ export async function downloadCategoryMedia(categoryId, onProgress) {
     const downloaded = getDownloadedCategories();
     downloaded.add(categoryId);
     saveDownloaded(downloaded);
+    activeController = null;
     onProgress?.(1, 1);
-    return;
+    return { success: true, total: 0, failed: 0, cancelled: false };
   }
 
   let completed = 0;
+  let failed = 0;
+  let cancelled = false;
   const BATCH = 6;
 
   for (let i = 0; i < mediaUrls.length; i += BATCH) {
+    if (controller.signal.aborted) {
+      cancelled = true;
+      break;
+    }
+
     const batch = mediaUrls.slice(i, i + BATCH);
-    await Promise.allSettled(batch.map(async (url) => {
-      try { await fetch(url); } catch {}
-      completed++;
-      onProgress?.(completed, total);
+    const results = await Promise.allSettled(batch.map(async (url) => {
+      const resp = await fetch(url, { signal: controller.signal });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
     }));
+
+    for (const r of results) {
+      if (r.status === 'fulfilled') {
+        completed++;
+      } else if (r.reason?.name === 'AbortError') {
+        cancelled = true;
+      } else {
+        failed++;
+        completed++;
+      }
+    }
+
+    onProgress?.(completed, total, { failed, cancelled });
+
+    if (cancelled) break;
   }
 
-  const downloaded = getDownloadedCategories();
-  downloaded.add(categoryId);
-  saveDownloaded(downloaded);
+  if (activeController === controller) {
+    activeController = null;
+  }
+
+  if (!cancelled && failed === 0) {
+    const downloaded = getDownloadedCategories();
+    downloaded.add(categoryId);
+    saveDownloaded(downloaded);
+  }
+
+  return { success: !cancelled && failed === 0, total, failed, cancelled };
 }

@@ -16,7 +16,15 @@ export function saveResult(result) {
   });
   // Keep last 50 results
   if (history.length > 50) history.splice(0, history.length - 50);
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(history)); } catch {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    return true;
+  } catch (e) {
+    if (e?.name === 'QuotaExceededError' || e?.code === 22) {
+      console.warn('localStorage quota exceeded while saving exam result:', e);
+    }
+    return false;
+  }
 }
 
 export function loadHistory() {
@@ -46,8 +54,17 @@ export function saveLearnAnswer(category, questionId) {
   if (!Array.isArray(data[category])) data[category] = [];
   if (!data[category].includes(questionId)) {
     data[category].push(questionId);
-    try { localStorage.setItem(LEARN_KEY, JSON.stringify(data)); } catch {}
+    try {
+      localStorage.setItem(LEARN_KEY, JSON.stringify(data));
+      return true;
+    } catch (e) {
+      if (e?.name === 'QuotaExceededError' || e?.code === 22) {
+        console.warn('localStorage quota exceeded while saving learn progress:', e);
+      }
+      return false;
+    }
   }
+  return true;
 }
 
 function loadLearnData() {

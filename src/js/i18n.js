@@ -190,8 +190,10 @@ export async function loadQuestionTranslations() {
     const res = await fetch('data/translations_en.json');
     questionTranslations = await res.json();
     return questionTranslations;
-  } catch {
+  } catch (err) {
+    console.warn('Failed to load English translations, falling back to Polish:', err);
     questionTranslations = {};
+    window.dispatchEvent(new CustomEvent('translation-load-error', { detail: err }));
     return questionTranslations;
   }
 }

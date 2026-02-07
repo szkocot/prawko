@@ -6,6 +6,7 @@ import { saveResult } from './stats.js';
 
 let state = null;
 let lastExamCategory = null;
+let answerDelegateHandler = null;
 
 export function getLastExamCategory() { return lastExamCategory; }
 
@@ -19,13 +20,46 @@ function shuffle(arr) {
   return a;
 }
 
+function removeAnswerDelegate() {
+  if (answerDelegateHandler) {
+    const answersContainer = document.querySelector('.answers');
+    if (answersContainer) {
+      answersContainer.removeEventListener('click', answerDelegateHandler);
+    }
+    answerDelegateHandler = null;
+  }
+}
+
 export function startExam(categoryData, meta) {
-  const rules = meta.exam;
+  const rules = {
+    ...meta.exam,
+    basicPoints: [...meta.exam.basicPoints],
+    specialistPoints: [...meta.exam.specialistPoints],
+  };
   const basic = shuffle(categoryData.questions.filter(q => q.type === 'basic'));
   const specialist = shuffle(categoryData.questions.filter(q => q.type === 'specialist'));
 
   const selectedBasic = basic.slice(0, rules.basicQuestions);
   const selectedSpecialist = specialist.slice(0, rules.specialistQuestions);
+
+  // Validate question counts and scale rules if needed
+  const originalMaxPoints = rules.maxPoints;
+  if (selectedBasic.length < rules.basicQuestions) {
+    console.warn(`Exam: expected ${rules.basicQuestions} basic questions but only ${selectedBasic.length} available. Scaling rules proportionally.`);
+    rules.basicQuestions = selectedBasic.length;
+    rules.basicPoints = rules.basicPoints.slice(0, selectedBasic.length);
+  }
+  if (selectedSpecialist.length < rules.specialistQuestions) {
+    console.warn(`Exam: expected ${rules.specialistQuestions} specialist questions but only ${selectedSpecialist.length} available. Scaling rules proportionally.`);
+    rules.specialistQuestions = selectedSpecialist.length;
+    rules.specialistPoints = rules.specialistPoints.slice(0, selectedSpecialist.length);
+  }
+  const newMaxPoints = rules.basicPoints.reduce((s, p) => s + p, 0)
+    + rules.specialistPoints.reduce((s, p) => s + p, 0);
+  if (newMaxPoints < originalMaxPoints) {
+    rules.maxPoints = newMaxPoints;
+    rules.passThreshold = Math.round(rules.passThreshold * (newMaxPoints / originalMaxPoints));
+  }
 
   // Build question list with point values
   const questions = [];
@@ -81,9 +115,21 @@ export function startExam(categoryData, meta) {
 
   // Setup quiz UI for exam mode
   document.querySelector('.learn-nav').classList.remove('visible');
+  document.querySelector('.quiz-back').classList.remove('visible');
   document.querySelector('.btn-end-exam').classList.add('visible');
   timerDisplay.classList.remove('warning', 'total-warning');
   totalTimerEl.textContent = formatTime(rules.totalTimeSeconds);
+
+  // Setup delegated answer handler (one listener for all questions)
+  removeAnswerDelegate();
+  const answersContainer = document.querySelector('.answers');
+  answerDelegateHandler = (e) => {
+    const btn = e.target.closest('.answer-btn');
+    if (btn && answersContainer.contains(btn)) {
+      handleAnswer(btn.dataset.answer);
+    }
+  };
+  answersContainer.addEventListener('click', answerDelegateHandler);
 
   showQuestion();
   state.examTimer.start();
@@ -103,12 +149,6 @@ function showQuestion() {
 
   // Render question
   renderQuestion(q, document.querySelector('.question-card'));
-
-  // Setup answer handlers
-  const answersDiv = document.querySelector('.answers');
-  answersDiv.querySelectorAll('.answer-btn').forEach(btn => {
-    btn.addEventListener('click', () => handleAnswer(btn.dataset.answer));
-  });
 
   // Reset and start question timer
   const timeLimit = q.type === 'basic' ? rules.basicTimeSeconds : rules.specialistTimeSeconds;
@@ -148,6 +188,7 @@ function finishExam() {
   state.finished = true;
   state.questionTimer.stop();
   state.examTimer.stop();
+  removeAnswerDelegate();
 
   const basicAnswers = state.questions.filter(a => a.question.type === 'basic');
   const specialistAnswers = state.questions.filter(a => a.question.type === 'specialist');
@@ -174,6 +215,15 @@ function finishExam() {
 
   // Navigate to results via hash
   window.location.hash = 'results';
+}
+
+export function refreshExamQuestion() {
+  if (!state || state.finished) return;
+  const item = state.questions[state.currentIndex];
+  renderQuestion(item.question, document.querySelector('.question-card'));
+  if (item.given !== null) {
+    highlightAnswer(document.querySelector('.answers'), item.given, item.question.correct);
+  }
 }
 
 export function setupExamListeners() {
@@ -212,6 +262,7 @@ export function setupExamListeners() {
 }
 
 export function cleanupExam() {
+  removeAnswerDelegate();
   if (state) {
     state.questionTimer?.stop();
     state.examTimer?.stop();

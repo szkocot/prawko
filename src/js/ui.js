@@ -95,7 +95,9 @@ export function renderQuestion(question, container) {
       const video = document.createElement('video');
       video.controls = true;
       video.playsInline = true;
-      video.preload = 'auto';
+      video.preload = 'metadata';
+      video.muted = true;
+      video.autoplay = true;
       video.src = `${MEDIA_BASE}/vid/${encodeURIComponent(q.media)}`;
       mediaArea.appendChild(video);
     } else if (q.mediaType === 'image') {
@@ -140,14 +142,25 @@ export function renderQuestion(question, container) {
 }
 
 export function highlightAnswer(answersDiv, selected, correct) {
+  // Ensure screen readers announce answer result changes
+  if (!answersDiv.hasAttribute('aria-live')) {
+    answersDiv.setAttribute('aria-live', 'polite');
+  }
+
+  const correctLabel = getLang() === 'en' ? 'Correct' : 'Poprawna';
+  const incorrectLabel = getLang() === 'en' ? 'Incorrect' : 'Niepoprawna';
+
   const buttons = answersDiv.querySelectorAll('.answer-btn');
   buttons.forEach(btn => {
     btn.disabled = true;
-    if (btn.dataset.answer === correct) {
+    const answer = btn.dataset.answer;
+    if (answer === correct) {
       btn.classList.add('correct');
+      btn.setAttribute('aria-label', `${btn.textContent.trim()} – ${correctLabel}`);
     }
-    if (btn.dataset.answer === selected && selected !== correct) {
+    if (answer === selected && selected !== correct) {
       btn.classList.add('incorrect');
+      btn.setAttribute('aria-label', `${btn.textContent.trim()} – ${incorrectLabel}`);
     }
   });
 }

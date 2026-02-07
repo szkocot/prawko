@@ -334,17 +334,17 @@ section.active {
 .features {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  padding: 32px 20px;
+  gap: 10px;
+  padding: 16px 20px;
   max-width: var(--max-width);
   margin: 0 auto;
 }
 
 .feature-card {
   background: var(--bg-card);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
-  padding: 24px 20px;
+  padding: 12px 14px;
   text-align: center;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -355,22 +355,22 @@ section.active {
 }
 
 .feature-card .feature-icon {
-  font-size: 2rem;
-  margin-bottom: 12px;
+  font-size: 1.3rem;
+  margin-bottom: 4px;
   display: block;
 }
 
 .feature-card h3 {
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
   color: var(--primary);
 }
 
 .feature-card p {
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   color: var(--text-secondary);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* Exam info */
@@ -1367,6 +1367,9 @@ footer a {
 
 .btn-back:hover { color: var(--text); }
 
+.quiz-back { display: none; }
+.quiz-back.visible { display: inline-block; }
+
 /* Footer attribution */
 .footer-attribution {
   margin-top: 4px;
@@ -1517,7 +1520,7 @@ button:focus-visible,
   }
 
   .feature-card {
-    padding: 28px 24px;
+    padding: 14px 16px;
   }
 
   .category-grid {

@@ -2,6 +2,7 @@ const CACHE_VERSION = 'prawko-v2';
 const APP_SHELL_CACHE = CACHE_VERSION + '-shell';
 const DATA_CACHE = CACHE_VERSION + '-data';
 const MEDIA_CACHE = CACHE_VERSION + '-media';
+const MEDIA_CACHE_LIMIT = 500;
 
 const APP_SHELL = [
   './',
@@ -24,7 +25,12 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(APP_SHELL_CACHE).then((cache) => cache.addAll(APP_SHELL))
   );
-  self.skipWaiting();
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', (event) => {
@@ -62,24 +68,39 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Media files (external B2 or local) — cache-first, cached on demand
+  // Media files (external B2 or local) — cache-first, cached on demand, LRU eviction
   if (url.hostname.includes('backblazeb2.com') || url.pathname.match(/\/media\//)) {
     event.respondWith(
       caches.open(MEDIA_CACHE).then((cache) =>
         cache.match(event.request).then((cached) => {
           if (cached) return cached;
           return fetch(event.request).then((response) => {
-            if (response.ok) cache.put(event.request, response.clone());
+            if (response.ok) {
+              cache.put(event.request, response.clone()).then(() =>
+                cache.keys().then((keys) => {
+                  if (keys.length > MEDIA_CACHE_LIMIT) {
+                    const toDelete = keys.slice(0, keys.length - MEDIA_CACHE_LIMIT);
+                    toDelete.forEach((key) => cache.delete(key));
+                  }
+                })
+              );
+            }
             return response;
-          });
+          }).catch(() =>
+            new Response('', { status: 503, statusText: 'Offline' })
+          );
         })
       )
     );
     return;
   }
 
-  // App shell — cache-first, fall back to network
+  // App shell — cache-first, fall back to network, offline fallback
   event.respondWith(
-    caches.match(event.request).then((cached) => cached || fetch(event.request))
+    caches.match(event.request).then((cached) =>
+      cached || fetch(event.request).catch(() =>
+        caches.match('./index.html')
+      )
+    )
   );
 });

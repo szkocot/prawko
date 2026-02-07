@@ -7,18 +7,23 @@ export class QuestionTimer {
     this.onTick = onTick;
     this.onExpire = onExpire;
     this._interval = null;
+    this._startTime = null;
+    this._startRemaining = null;
   }
 
   start() {
     this.stop();
+    this._startTime = performance.now();
+    this._startRemaining = this.remaining;
     this._interval = setInterval(() => {
-      this.remaining--;
+      const elapsed = (performance.now() - this._startTime) / 1000;
+      this.remaining = Math.max(0, Math.ceil(this._startRemaining - elapsed));
       this.onTick(this.remaining, this.total);
       if (this.remaining <= 0) {
         this.stop();
         this.onExpire();
       }
-    }, 1000);
+    }, 250);
   }
 
   stop() {
@@ -32,6 +37,8 @@ export class QuestionTimer {
     this.stop();
     this.total = seconds;
     this.remaining = seconds;
+    this._startTime = null;
+    this._startRemaining = null;
   }
 }
 
@@ -41,18 +48,23 @@ export class ExamTimer {
     this.onTick = onTick;
     this.onExpire = onExpire;
     this._interval = null;
+    this._startTime = null;
+    this._startRemaining = null;
   }
 
   start() {
     this.stop();
+    this._startTime = performance.now();
+    this._startRemaining = this.remaining;
     this._interval = setInterval(() => {
-      this.remaining--;
+      const elapsed = (performance.now() - this._startTime) / 1000;
+      this.remaining = Math.max(0, Math.ceil(this._startRemaining - elapsed));
       this.onTick(this.remaining);
       if (this.remaining <= 0) {
         this.stop();
         this.onExpire();
       }
-    }, 1000);
+    }, 250);
   }
 
   stop() {
