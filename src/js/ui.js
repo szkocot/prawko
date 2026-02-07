@@ -234,6 +234,19 @@ export function renderResults(result) {
   });
 }
 
+/** Preload the next question's media so it's ready when navigated to */
+export function preloadMedia(question) {
+  if (!question?.media) return;
+  const prefix = question.mediaType === 'video' ? 'vid' : 'img';
+  const url = `${MEDIA_BASE}/${prefix}/${encodeURIComponent(question.media)}`;
+  if (question.mediaType === 'image') {
+    const img = new Image();
+    img.src = url;
+  } else {
+    fetch(url, { mode: 'no-cors' }).catch(() => {});
+  }
+}
+
 /** Apply current language to all data-i18n elements */
 export function applyLanguage() {
   document.querySelectorAll('[data-i18n]').forEach(el => {

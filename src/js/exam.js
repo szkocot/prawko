@@ -1,7 +1,7 @@
 // exam.js — Exam simulation engine (32 questions, real scoring & timers)
 
 import { QuestionTimer, ExamTimer, formatTime } from './timer.js';
-import { renderQuestion, highlightAnswer, renderResults, showModal, hideModal } from './ui.js';
+import { renderQuestion, highlightAnswer, renderResults, showModal, hideModal, preloadMedia } from './ui.js';
 import { saveResult } from './stats.js';
 
 let state = null;
@@ -156,6 +156,10 @@ function showQuestion() {
   document.querySelector('.question-timer').textContent = formatTime(timeLimit);
   document.querySelector('.timer-display').classList.remove('warning');
   state.questionTimer.start();
+
+  // Preload next question's media
+  const nextItem = questions[currentIndex + 1];
+  if (nextItem) preloadMedia(nextItem.question);
 }
 
 function handleAnswer(answer) {

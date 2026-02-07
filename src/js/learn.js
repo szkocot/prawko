@@ -1,6 +1,6 @@
 // learn.js — Learning mode (sequential browsing, no timer, immediate feedback)
 
-import { renderQuestion, highlightAnswer } from './ui.js';
+import { renderQuestion, highlightAnswer, preloadMedia } from './ui.js';
 import { saveLearnAnswer, getLearnAnswered } from './stats.js';
 import { getLang } from './i18n.js';
 
@@ -115,6 +115,10 @@ function showLearnQuestion() {
   document.querySelector('.answers').querySelectorAll('.answer-btn').forEach(btn => {
     btn.addEventListener('click', () => handleLearnAnswer(btn.dataset.answer));
   });
+
+  // Preload next question's media
+  const next = state.questions[state.currentIndex + 1];
+  if (next) preloadMedia(next);
 }
 
 function handleLearnAnswer(answer) {
