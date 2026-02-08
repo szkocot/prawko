@@ -7,6 +7,7 @@ import { saveResult } from './stats.js';
 let state = null;
 let lastExamCategory = null;
 let answerDelegateHandler = null;
+let keydownHandler = null;
 
 export function getLastExamCategory() { return lastExamCategory; }
 
@@ -131,12 +132,35 @@ export function startExam(categoryData, meta) {
   };
   answersContainer.addEventListener('click', answerDelegateHandler);
 
+  // Keyboard shortcuts
+  if (keydownHandler) document.removeEventListener('keydown', keydownHandler);
+  keydownHandler = (e) => {
+    if (document.getElementById('confirm-modal')?.classList.contains('active')) return;
+    if (!state || state.finished) return;
+    const item = state.questions[state.currentIndex];
+    if (item.given !== null) return;
+    const key = e.key.toLowerCase();
+    const answersDiv = document.querySelector('.answers');
+    const isBasic = answersDiv?.classList.contains('yn-answers');
+
+    if (isBasic) {
+      if (key === 't' || key === '1') { e.preventDefault(); handleAnswer('T'); }
+      else if (key === 'n' || key === '2') { e.preventDefault(); handleAnswer('N'); }
+    } else {
+      if (key === '1') { e.preventDefault(); handleAnswer('A'); }
+      else if (key === '2') { e.preventDefault(); handleAnswer('B'); }
+      else if (key === '3') { e.preventDefault(); handleAnswer('C'); }
+    }
+  };
+  document.addEventListener('keydown', keydownHandler);
+
   showQuestion();
   state.examTimer.start();
 }
 
 function showQuestion() {
   if (!state || state.finished) return;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   const { questions, currentIndex, rules } = state;
   const item = questions[currentIndex];
   const q = item.question;
@@ -192,6 +216,10 @@ function finishExam() {
   state.finished = true;
   state.questionTimer.stop();
   state.examTimer.stop();
+  if (keydownHandler) {
+    document.removeEventListener('keydown', keydownHandler);
+    keydownHandler = null;
+  }
   removeAnswerDelegate();
 
   const basicAnswers = state.questions.filter(a => a.question.type === 'basic');
@@ -266,6 +294,10 @@ export function setupExamListeners() {
 }
 
 export function cleanupExam() {
+  if (keydownHandler) {
+    document.removeEventListener('keydown', keydownHandler);
+    keydownHandler = null;
+  }
   removeAnswerDelegate();
   if (state) {
     state.questionTimer?.stop();

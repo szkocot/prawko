@@ -1,10 +1,11 @@
 // learn.js — Learning mode (sequential browsing, no timer, immediate feedback)
 
 import { renderQuestion, highlightAnswer, preloadMedia } from './ui.js';
-import { saveLearnAnswer, getLearnAnswered } from './stats.js';
+import { saveLearnAnswer, getLearnAnswered, getLearnAnswerForQuestion } from './stats.js';
 import { getLang } from './i18n.js';
 
 let state = null;
+let keydownHandler = null;
 
 // Inject toast styles once
 (function injectToastStyles() {
@@ -78,6 +79,8 @@ export function startLearn(categoryData) {
     questions: categoryData.questions,
     currentIndex: startIndex,
     answered: false,
+    correctCount: 0,
+    incorrectCount: 0,
   };
 
   // Show learn nav and back button, hide exam controls
@@ -88,6 +91,45 @@ export function startLearn(categoryData) {
   // Hide timers in learn mode
   document.querySelector('.timer-display').style.display = 'none';
 
+  // Show learn stats counter
+  const learnStatsEl = document.querySelector('.learn-stats');
+  if (learnStatsEl) learnStatsEl.classList.add('visible');
+  updateLearnStats();
+
+  // Keyboard shortcuts
+  if (keydownHandler) document.removeEventListener('keydown', keydownHandler);
+  keydownHandler = (e) => {
+    if (document.getElementById('confirm-modal')?.classList.contains('active')) return;
+    if (!state) return;
+    const key = e.key.toLowerCase();
+    const answersDiv = document.querySelector('.answers');
+    const isBasic = answersDiv?.classList.contains('yn-answers');
+
+    if (!state.answered) {
+      if (isBasic) {
+        if (key === 't' || key === '1') { e.preventDefault(); handleLearnAnswer('T'); return; }
+        if (key === 'n' || key === '2') { e.preventDefault(); handleLearnAnswer('N'); return; }
+      } else {
+        if (key === '1') { e.preventDefault(); handleLearnAnswer('A'); return; }
+        if (key === '2') { e.preventDefault(); handleLearnAnswer('B'); return; }
+        if (key === '3') { e.preventDefault(); handleLearnAnswer('C'); return; }
+      }
+    }
+
+    if (key === 'arrowleft' && state.currentIndex > 0) {
+      e.preventDefault();
+      state.currentIndex--;
+      showLearnQuestion();
+      updateNavButtons();
+    } else if (key === 'arrowright' && state.currentIndex < state.questions.length - 1) {
+      e.preventDefault();
+      state.currentIndex++;
+      showLearnQuestion();
+      updateNavButtons();
+    }
+  };
+  document.addEventListener('keydown', keydownHandler);
+
   showLearnQuestion();
   updateNavButtons();
 
@@ -97,8 +139,22 @@ export function startLearn(categoryData) {
   }
 }
 
+function updateLearnStats() {
+  const el = document.querySelector('.learn-stats');
+  if (!el || !state) return;
+  el.innerHTML = '';
+  const correct = document.createElement('span');
+  correct.className = 'learn-stats-correct';
+  correct.textContent = `\u2713 ${state.correctCount}`;
+  const incorrect = document.createElement('span');
+  incorrect.className = 'learn-stats-incorrect';
+  incorrect.textContent = `\u2717 ${state.incorrectCount}`;
+  el.append(correct, incorrect);
+}
+
 function showLearnQuestion() {
   if (!state) return;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
   state.answered = false;
   state.givenAnswer = null;
   const q = state.questions[state.currentIndex];
@@ -116,6 +172,14 @@ function showLearnQuestion() {
     btn.addEventListener('click', () => handleLearnAnswer(btn.dataset.answer));
   });
 
+  // Check for previously answered
+  const prevAnswer = getLearnAnswerForQuestion(state.category, q.id);
+  if (prevAnswer) {
+    state.answered = true;
+    state.givenAnswer = prevAnswer;
+    highlightAnswer(document.querySelector('.answers'), prevAnswer, q.correct);
+  }
+
   // Preload next question's media
   const next = state.questions[state.currentIndex + 1];
   if (next) preloadMedia(next);
@@ -127,7 +191,14 @@ function handleLearnAnswer(answer) {
   state.givenAnswer = answer;
   const q = state.questions[state.currentIndex];
   highlightAnswer(document.querySelector('.answers'), answer, q.correct);
-  saveLearnAnswer(state.category, q.id);
+  saveLearnAnswer(state.category, q.id, answer);
+
+  if (answer === q.correct) {
+    state.correctCount++;
+  } else {
+    state.incorrectCount++;
+  }
+  updateLearnStats();
 }
 
 export function setupLearnListeners() {
@@ -168,11 +239,17 @@ export function refreshLearnQuestion() {
 }
 
 export function cleanupLearn() {
+  if (keydownHandler) {
+    document.removeEventListener('keydown', keydownHandler);
+    keydownHandler = null;
+  }
   // Stop any playing video
   const video = document.querySelector('.media-area video');
   if (video) { video.pause(); video.removeAttribute('src'); video.load(); }
   document.querySelector('.timer-display').style.display = '';
   document.querySelector('.learn-nav').classList.remove('visible');
   document.querySelector('.quiz-back').classList.remove('visible');
+  const learnStatsEl = document.querySelector('.learn-stats');
+  if (learnStatsEl) learnStatsEl.classList.remove('visible');
   state = null;
 }

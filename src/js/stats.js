@@ -49,11 +49,16 @@ export function getCategoryStats(category) {
   return { attempts: history.length, passed, lastScore };
 }
 
-export function saveLearnAnswer(category, questionId) {
+export function saveLearnAnswer(category, questionId, answer) {
   const data = loadLearnData();
-  if (!Array.isArray(data[category])) data[category] = [];
-  if (!data[category].includes(questionId)) {
-    data[category].push(questionId);
+  if (typeof data[category] !== 'object' || Array.isArray(data[category])) {
+    // Migrate from old array format
+    const oldArr = Array.isArray(data[category]) ? data[category] : [];
+    data[category] = {};
+    oldArr.forEach(id => { data[category][id] = null; });
+  }
+  if (!(questionId in data[category])) {
+    data[category][questionId] = answer || null;
     try {
       localStorage.setItem(LEARN_KEY, JSON.stringify(data));
       return true;
@@ -79,10 +84,27 @@ function loadLearnData() {
 
 export function getLearnProgress(category) {
   const data = loadLearnData();
-  return data[category]?.length || 0;
+  const catData = data[category];
+  if (!catData) return 0;
+  if (Array.isArray(catData)) return catData.length;
+  return Object.keys(catData).length;
 }
 
 export function getLearnAnswered(category) {
   const data = loadLearnData();
-  return new Set(data[category] || []);
+  const catData = data[category];
+  if (!catData) return new Set();
+  if (Array.isArray(catData)) return new Set(catData);
+  return new Set(Object.keys(catData));
+}
+
+export function clearHistory() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+}
+
+export function getLearnAnswerForQuestion(category, questionId) {
+  const data = loadLearnData();
+  const catData = data[category];
+  if (!catData || Array.isArray(catData)) return null;
+  return catData[questionId] ?? null;
 }

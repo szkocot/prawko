@@ -82,6 +82,12 @@ const translations = {
     totalTimer: 'Razem',
     saveOffline: 'Pobierz offline',
     savedOffline: 'Dostępne offline',
+    examHistory: 'Historia egzaminów',
+    noHistory: 'Brak wyników egzaminów. Rozwiąż swój pierwszy egzamin!',
+    clearHistory: 'Wyczyść historię',
+    offlineNotice: 'Jesteś offline',
+    updateAvailable: 'Dostępna aktualizacja',
+    tapToRefresh: 'Odśwież',
   },
   en: {
     appName: 'Prawko',
@@ -164,6 +170,12 @@ const translations = {
     totalTimer: 'Total',
     saveOffline: 'Save offline',
     savedOffline: 'Available offline',
+    examHistory: 'Exam history',
+    noHistory: 'No exam results yet. Take your first exam!',
+    clearHistory: 'Clear history',
+    offlineNotice: 'You are offline',
+    updateAvailable: 'Update available',
+    tapToRefresh: 'Refresh',
   },
 };
 

@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'prawko-v3';
+const CACHE_VERSION = 'prawko-v5';
 const APP_SHELL_CACHE = CACHE_VERSION + '-shell';
 const DATA_CACHE = CACHE_VERSION + '-data';
 const MEDIA_CACHE = CACHE_VERSION + '-media';
@@ -18,6 +18,7 @@ const APP_SHELL = [
   './js/i18n.js',
   './js/offline.js',
   './data/meta.json',
+  './data/translations_en.json',
   './manifest.json'
 ];
 
@@ -52,8 +53,19 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.open(DATA_CACHE).then((cache) =>
         cache.match(event.request).then((cached) => {
-          const fetched = fetch(event.request).then((response) => {
-            if (response.ok) cache.put(event.request, response.clone());
+          const fetched = fetch(event.request).then(async (response) => {
+            if (response.ok) {
+              if (cached) {
+                const [oldText, newText] = await Promise.all([
+                  cached.clone().text(),
+                  response.clone().text()
+                ]);
+                if (oldText !== newText) {
+                  notifyClients({ type: 'DATA_UPDATED' });
+                }
+              }
+              cache.put(event.request, response.clone());
+            }
             return response;
           }).catch(() => cached);
           return cached || fetched;
@@ -90,12 +102,33 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App shell — cache-first, fall back to network, offline fallback
+  // App shell — stale-while-revalidate
   event.respondWith(
-    caches.match(event.request).then((cached) =>
-      cached || fetch(event.request).catch(() =>
-        caches.match('./index.html')
-      )
+    caches.open(APP_SHELL_CACHE).then((cache) =>
+      cache.match(event.request).then((cached) => {
+        const fetched = fetch(event.request).then(async (response) => {
+          if (response.ok) {
+            if (cached) {
+              const [oldText, newText] = await Promise.all([
+                cached.clone().text(),
+                response.clone().text()
+              ]);
+              if (oldText !== newText) {
+                notifyClients({ type: 'APP_UPDATED' });
+              }
+            }
+            cache.put(event.request, response.clone());
+          }
+          return response;
+        }).catch(() => cached || caches.match('./index.html'));
+        return cached || fetched;
+      })
     )
   );
 });
+
+function notifyClients(message) {
+  self.clients.matchAll({ type: 'window' }).then((clients) => {
+    clients.forEach((client) => client.postMessage(message));
+  });
+}

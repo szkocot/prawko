@@ -1,7 +1,7 @@
 // ui.js — DOM rendering utilities
 
 import { t, getLang, translateQuestion } from './i18n.js';
-import { getCategoryStats, getLearnProgress } from './stats.js';
+import { getCategoryStats, getLearnProgress, loadHistory, clearHistory } from './stats.js';
 import { MEDIA_BASE } from './data.js';
 
 export function showScreen(id) {
@@ -79,6 +79,7 @@ export function renderCategories(meta, downloadedSet = new Set()) {
 }
 
 export function renderQuestion(question, container) {
+  container.classList.add('transitioning');
   const q = translateQuestion(question);
   const mediaArea = container.querySelector('.media-area');
   const questionText = container.querySelector('.question-text');
@@ -88,9 +89,10 @@ export function renderQuestion(question, container) {
   const oldVideo = mediaArea.querySelector('video');
   if (oldVideo) { oldVideo.pause(); oldVideo.removeAttribute('src'); oldVideo.load(); }
   mediaArea.innerHTML = '';
-  mediaArea.classList.remove('has-media');
+  mediaArea.classList.remove('has-media', 'loading');
+
   if (q.media) {
-    mediaArea.classList.add('has-media');
+    mediaArea.classList.add('has-media', 'loading');
     if (q.mediaType === 'video') {
       const video = document.createElement('video');
       video.controls = true;
@@ -98,10 +100,14 @@ export function renderQuestion(question, container) {
       video.preload = 'metadata';
       video.muted = true;
       video.autoplay = true;
+      video.onloadeddata = () => mediaArea.classList.remove('loading');
+      video.onerror = () => mediaArea.classList.remove('loading');
       video.src = `${MEDIA_BASE}/vid/${encodeURIComponent(q.media)}`;
       mediaArea.appendChild(video);
     } else if (q.mediaType === 'image') {
       const img = document.createElement('img');
+      img.onload = () => mediaArea.classList.remove('loading');
+      img.onerror = () => mediaArea.classList.remove('loading');
       img.src = `${MEDIA_BASE}/img/${encodeURIComponent(q.media)}`;
       img.alt = t('imgAlt');
       img.loading = 'eager';
@@ -139,6 +145,8 @@ export function renderQuestion(question, container) {
       answersDiv.appendChild(btn);
     });
   }
+
+  requestAnimationFrame(() => container.classList.remove('transitioning'));
 }
 
 export function highlightAnswer(answersDiv, selected, correct) {
@@ -245,6 +253,53 @@ export function preloadMedia(question) {
   } else {
     fetch(url, { mode: 'no-cors' }).catch(() => {});
   }
+}
+
+export function renderHistory() {
+  const history = loadHistory();
+  const listEl = document.querySelector('.history-list');
+  const emptyEl = document.querySelector('.history-empty');
+  const clearBtn = document.querySelector('.btn-clear-history');
+
+  listEl.innerHTML = '';
+
+  if (history.length === 0) {
+    emptyEl.style.display = '';
+    if (clearBtn) clearBtn.style.display = 'none';
+    return;
+  }
+
+  emptyEl.style.display = 'none';
+  if (clearBtn) clearBtn.style.display = '';
+
+  // Show newest first
+  [...history].reverse().forEach(r => {
+    const item = document.createElement('div');
+    item.className = 'history-item';
+
+    const info = document.createElement('div');
+    info.className = 'history-item-info';
+    const cat = document.createElement('div');
+    cat.className = 'history-item-category';
+    cat.textContent = r.category;
+    const date = document.createElement('div');
+    date.className = 'history-item-date';
+    date.textContent = new Date(r.date).toLocaleDateString(getLang() === 'en' ? 'en-GB' : 'pl-PL', {
+      day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
+    info.append(cat, date);
+
+    const scoreDiv = document.createElement('div');
+    scoreDiv.className = `history-item-score ${r.passed ? 'pass' : 'fail'}`;
+    scoreDiv.textContent = `${r.score}/${r.maxPoints}`;
+    const badge = document.createElement('div');
+    badge.className = `history-item-badge ${r.passed ? 'pass' : 'fail'}`;
+    badge.textContent = r.passed ? t('passed') : t('failed');
+    scoreDiv.appendChild(badge);
+
+    item.append(info, scoreDiv);
+    listEl.appendChild(item);
+  });
 }
 
 /** Apply current language to all data-i18n elements */

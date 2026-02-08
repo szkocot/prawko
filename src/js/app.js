@@ -3,9 +3,10 @@
 import { fetchMeta, fetchCategory } from './data.js';
 import { startExam, setupExamListeners, cleanupExam, getLastExamCategory, refreshExamQuestion } from './exam.js';
 import { startLearn, setupLearnListeners, cleanupLearn, refreshLearnQuestion } from './learn.js';
-import { showScreen, renderCategories, applyLanguage } from './ui.js';
+import { showScreen, renderCategories, applyLanguage, renderHistory } from './ui.js';
 import { setLang, getLang, loadQuestionTranslations, t } from './i18n.js';
 import { downloadCategoryMedia, getDownloadedCategories } from './offline.js';
+import { clearHistory } from './stats.js';
 
 let meta = null;
 let currentMode = 'learn'; // 'learn' or 'exam'
@@ -16,7 +17,7 @@ function navigate(screen) {
   window.location.hash = screen;
 }
 
-const VALID_SCREENS = new Set(['home', 'categories', 'quiz', 'results', 'zrodlo-danych']);
+const VALID_SCREENS = new Set(['home', 'categories', 'quiz', 'results', 'history', 'zrodlo-danych']);
 
 function handleRoute() {
   const hash = window.location.hash.slice(1) || 'home';
@@ -48,6 +49,7 @@ function handleRoute() {
   }
 
   if (hash === 'categories' && meta) renderCategories(meta, getDownloadedCategories());
+  if (hash === 'history') renderHistory();
   showScreen(hash);
 }
 
@@ -73,10 +75,13 @@ function handleCategorySelect(categoryId) {
 // ---- Init ----
 async function init() {
   // Load metadata
+  const spinner = document.getElementById('home-spinner');
   try {
     meta = await fetchMeta();
     renderCategories(meta, getDownloadedCategories());
+    if (spinner) spinner.classList.add('hidden');
   } catch {
+    if (spinner) spinner.classList.add('hidden');
     document.getElementById('app').textContent = 'Failed to load app data. Please refresh.';
     return;
   }
@@ -120,16 +125,16 @@ async function init() {
   if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
   const themeBtn = document.querySelector('.theme-btn');
   const themeIcon = themeBtn.querySelector('.theme-icon');
-  if (savedTheme === 'dark') themeIcon.textContent = '☀️';
+  if (savedTheme === 'dark') themeIcon.innerHTML = '<use href="#icon-sun"/>';
   themeBtn.addEventListener('click', () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     if (isDark) {
       document.documentElement.removeAttribute('data-theme');
-      themeIcon.textContent = '🌙';
+      themeIcon.innerHTML = '<use href="#icon-moon"/>';
       try { localStorage.setItem('prawko_theme', 'light'); } catch {}
     } else {
       document.documentElement.setAttribute('data-theme', 'dark');
-      themeIcon.textContent = '☀️';
+      themeIcon.innerHTML = '<use href="#icon-sun"/>';
       try { localStorage.setItem('prawko_theme', 'dark'); } catch {}
     }
   });
@@ -193,6 +198,12 @@ async function init() {
     }
   });
 
+  // Clear history button
+  document.querySelector('.btn-clear-history')?.addEventListener('click', () => {
+    clearHistory();
+    renderHistory();
+  });
+
   // Setup exam and learn listeners
   setupExamListeners();
   setupLearnListeners();
@@ -203,8 +214,37 @@ async function init() {
 
   // Register service worker
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(err => console.warn('SW registration failed:', err));
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(err => console.warn('SW registration failed:', err));
+
+    // Listen for update notifications from SW
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data?.type === 'APP_UPDATED' || event.data?.type === 'DATA_UPDATED') {
+        const banner = document.getElementById('update-banner');
+        if (banner) banner.style.display = '';
+      }
+    });
   }
+
+  // Update banner reload
+  document.getElementById('update-banner-btn')?.addEventListener('click', () => {
+    location.reload();
+  });
+
+  // Offline/online indicator
+  const offlineBanner = document.getElementById('offline-banner');
+  function updateOnlineStatus() {
+    if (offlineBanner) offlineBanner.style.display = navigator.onLine ? 'none' : '';
+  }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+  updateOnlineStatus();
+
+  // Preload category data on hover
+  document.querySelectorAll('.category-card').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      fetchCategory(card.dataset.category).catch(() => {});
+    }, { once: true });
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);

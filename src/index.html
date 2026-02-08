@@ -4,26 +4,65 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#6366f1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://*.backblazeb2.com; media-src 'self' https://*.backblazeb2.com; connect-src 'self' https://*.backblazeb2.com; object-src 'none'; base-uri 'self'; form-action 'none';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' https://*.backblazeb2.com; media-src 'self' https://*.backblazeb2.com; connect-src 'self' https://*.backblazeb2.com; object-src 'none'; base-uri 'self'; form-action 'none';">
   <meta name="description" content="Prawko — aplikacja do nauki pytań egzaminacyjnych na prawo jazdy. Wszystkie 3719 oficjalnych pytań.">
+  <meta property="og:title" content="Prawko — Egzamin na prawo jazdy">
+  <meta property="og:description" content="Wszystkie 3719 oficjalnych pytań egzaminacyjnych na prawo jazdy. Nauka i symulacja egzaminu.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="icons/icon-512.png">
   <title>Prawko — Egzamin na prawo jazdy</title>
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
   <svg style="position:absolute;width:0;height:0" aria-hidden="true">
-    <filter id="noise">
-      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
-    </filter>
+    <defs>
+      <filter id="noise">
+        <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+      </filter>
+      <symbol id="icon-learn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+      </symbol>
+      <symbol id="icon-exam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c0 1.1 2.7 3 6 3s6-1.9 6-3v-5"/>
+      </symbol>
+      <symbol id="icon-categories" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
+      </symbol>
+      <symbol id="icon-media" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+      </symbol>
+      <symbol id="icon-offline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>
+      </symbol>
+      <symbol id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </symbol>
+      <symbol id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </symbol>
+    </defs>
   </svg>
 
   <main id="app">
 
+    <div class="offline-banner" id="offline-banner" role="status" aria-live="polite" style="display:none">
+      <span data-i18n="offlineNotice">Jesteś offline</span>
+    </div>
+
+    <div class="update-banner" id="update-banner" role="status" aria-live="polite" style="display:none">
+      <span data-i18n="updateAvailable">Dostępna aktualizacja</span>
+      <button class="update-banner-btn" id="update-banner-btn" data-i18n="tapToRefresh">Odśwież</button>
+    </div>
+
     <div class="top-controls">
       <button class="theme-btn" aria-label="Toggle dark mode">
-        <span class="theme-icon">🌙</span>
+        <svg class="theme-icon" width="20" height="20"><use href="#icon-moon"/></svg>
       </button>
       <div class="lang-toggle" role="radiogroup" aria-label="Wybór języka">
         <button class="lang-btn active" data-lang="pl">PL</button>
@@ -38,6 +77,8 @@
         <p class="hero-tagline" data-i18n="tagline">Wszystkie 3719 oficjalnych pytań egzaminacyjnych</p>
       </header>
 
+      <div class="loading-spinner" id="home-spinner"></div>
+
       <nav class="home-nav">
         <button class="btn btn-primary" data-navigate="categories" data-i18n="start">Rozpocznij</button>
         <a href="#zrodlo-danych" class="btn btn-link" data-navigate="zrodlo-danych" data-i18n="dataSource">Źródło danych</a>
@@ -45,27 +86,27 @@
 
       <div class="features">
         <div class="feature-card">
-          <span class="feature-icon" aria-hidden="true">📖</span>
+          <svg class="feature-icon" aria-hidden="true" width="28" height="28"><use href="#icon-learn"/></svg>
           <h3 data-i18n="featureLearn">Tryb nauki</h3>
           <p data-i18n="featureLearnDesc">Ucz się we własnym tempie z natychmiastową informacją zwrotną</p>
         </div>
         <div class="feature-card">
-          <span class="feature-icon" aria-hidden="true">🎓</span>
+          <svg class="feature-icon" aria-hidden="true" width="28" height="28"><use href="#icon-exam"/></svg>
           <h3 data-i18n="featureExam">Symulacja egzaminu</h3>
           <p data-i18n="featureExamDesc">Realistyczna symulacja z limitem czasu i punktacją</p>
         </div>
         <div class="feature-card">
-          <span class="feature-icon" aria-hidden="true">🏷️</span>
+          <svg class="feature-icon" aria-hidden="true" width="28" height="28"><use href="#icon-categories"/></svg>
           <h3 data-i18n="featureCategories">12 kategorii</h3>
           <p data-i18n="featureCategoriesDesc">A, A1, A2, AM, B, B1, C, C1, D, D1, PT, T</p>
         </div>
         <div class="feature-card">
-          <span class="feature-icon" aria-hidden="true">🎬</span>
+          <svg class="feature-icon" aria-hidden="true" width="28" height="28"><use href="#icon-media"/></svg>
           <h3 data-i18n="featureMedia">Multimedia</h3>
           <p data-i18n="featureMediaDesc">Zdjęcia i filmy wideo dołączone do pytań</p>
         </div>
         <div class="feature-card">
-          <span class="feature-icon" aria-hidden="true">📴</span>
+          <svg class="feature-icon" aria-hidden="true" width="28" height="28"><use href="#icon-offline"/></svg>
           <h3 data-i18n="featureOffline">Tryb offline</h3>
           <p data-i18n="featureOfflineDesc">Działaj bez internetu dzięki technologii PWA</p>
         </div>
@@ -96,6 +137,10 @@
       <div class="mode-toggle">
         <button class="mode-btn active" data-mode="learn" data-i18n="modeLearn">Nauka</button>
         <button class="mode-btn" data-mode="exam" data-i18n="modeExam">Egzamin</button>
+      </div>
+
+      <div style="text-align:center;margin-bottom:8px">
+        <button class="btn btn-link btn-history-link" data-navigate="history" data-i18n="examHistory">Historia egzaminów</button>
       </div>
 
       <div class="category-grid">
@@ -178,6 +223,7 @@
           </div>
         </div>
         <span class="question-progress" aria-live="polite">1 / 32</span>
+        <span class="learn-stats" aria-live="polite"></span>
       </header>
 
       <div class="progress-bar">
@@ -248,10 +294,28 @@
       <nav class="results-nav">
         <button class="btn btn-primary btn-retry" data-i18n="retry">Spróbuj ponownie</button>
         <button class="btn btn-secondary" data-navigate="categories" data-i18n="backToCategories">Powrót do kategorii</button>
+        <button class="btn btn-secondary" data-navigate="history" data-i18n="examHistory">Historia egzaminów</button>
       </nav>
     </section>
 
-    <!-- ===== 5. DATA SOURCE PAGE ===== -->
+    <!-- ===== 5. HISTORY SCREEN ===== -->
+    <section id="history" class="screen">
+      <header class="screen-header">
+        <button class="btn btn-back" data-navigate="categories" data-i18n="backToCategories">&#8592; Powrót do kategorii</button>
+        <h2 data-i18n="examHistory">Historia egzaminów</h2>
+      </header>
+      <div class="history-content container">
+        <div class="history-list"></div>
+        <div class="history-empty" style="display:none">
+          <p data-i18n="noHistory">Brak wyników egzaminów. Rozwiąż swój pierwszy egzamin!</p>
+        </div>
+        <div class="history-actions">
+          <button class="btn btn-secondary btn-clear-history" data-i18n="clearHistory" style="display:none">Wyczyść historię</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== 6. DATA SOURCE PAGE ===== -->
     <section id="zrodlo-danych" class="screen">
       <header class="screen-header">
         <button class="btn btn-back" data-navigate="home" data-i18n="back">&#8592; Powrót</button>
