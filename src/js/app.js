@@ -3,7 +3,7 @@
 import { fetchMeta, fetchCategory } from './data.js';
 import { startExam, setupExamListeners, cleanupExam, getLastExamCategory, refreshExamQuestion } from './exam.js';
 import { startLearn, setupLearnListeners, cleanupLearn, refreshLearnQuestion } from './learn.js';
-import { showScreen, renderCategories, applyLanguage, renderHistory } from './ui.js';
+import { showScreen, renderCategories, applyLanguage, renderHistory, showConfirmModal } from './ui.js';
 import { setLang, getLang, loadQuestionTranslations, t } from './i18n.js';
 import { downloadCategoryMedia, getDownloadedCategories } from './offline.js';
 import { clearHistory } from './stats.js';
@@ -100,6 +100,12 @@ async function init() {
       document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       currentMode = btn.dataset.mode;
+      const desc = document.getElementById('mode-description');
+      if (desc) {
+        const key = currentMode === 'learn' ? 'modeLearnDesc' : 'modeExamDesc';
+        desc.textContent = t(key);
+        desc.dataset.i18n = key;
+      }
     });
   });
 
@@ -198,10 +204,12 @@ async function init() {
     }
   });
 
-  // Clear history button
+  // Clear history button — with confirmation
   document.querySelector('.btn-clear-history')?.addEventListener('click', () => {
-    clearHistory();
-    renderHistory();
+    showConfirmModal(t('confirmClearHistory'), t('confirmClearHistoryDesc'), () => {
+      clearHistory();
+      renderHistory();
+    });
   });
 
   // Setup exam and learn listeners

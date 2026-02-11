@@ -1,8 +1,9 @@
 // exam.js — Exam simulation engine (32 questions, real scoring & timers)
 
 import { QuestionTimer, ExamTimer, formatTime } from './timer.js';
-import { renderQuestion, highlightAnswer, renderResults, showModal, hideModal, preloadMedia } from './ui.js';
+import { renderQuestion, highlightAnswer, renderResults, showConfirmModal, confirmModalAction, hideModal, preloadMedia } from './ui.js';
 import { saveResult } from './stats.js';
+import { t } from './i18n.js';
 
 let state = null;
 let lastExamCategory = null;
@@ -261,13 +262,12 @@ export function refreshExamQuestion() {
 export function setupExamListeners() {
   // End exam button → show modal
   document.querySelector('.btn-end-exam').addEventListener('click', () => {
-    if (state && !state.finished) showModal();
+    if (state && !state.finished) showConfirmModal(t('confirmExit'), t('confirmExitDesc'), () => finishExam());
   });
 
-  // Modal confirm
+  // Modal confirm — call generic stored callback
   document.querySelector('.btn-confirm-end').addEventListener('click', () => {
-    hideModal();
-    finishExam();
+    confirmModalAction();
   });
 
   // Modal cancel

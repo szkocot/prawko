@@ -88,6 +88,11 @@ const translations = {
     offlineNotice: 'Jesteś offline',
     updateAvailable: 'Dostępna aktualizacja',
     tapToRefresh: 'Odśwież',
+    confirmClearHistory: 'Wyczyść historię?',
+    confirmClearHistoryDesc: 'Tej operacji nie można cofnąć.',
+    modeLearnDesc: 'Ucz się we własnym tempie z natychmiastową informacją zwrotną',
+    modeExamDesc: 'Symulacja 32 pytań z limitem czasu i punktacją',
+    mediaUnavailable: 'Multimedia niedostępne',
   },
   en: {
     appName: 'Prawko',
@@ -176,6 +181,11 @@ const translations = {
     offlineNotice: 'You are offline',
     updateAvailable: 'Update available',
     tapToRefresh: 'Refresh',
+    confirmClearHistory: 'Clear history?',
+    confirmClearHistoryDesc: 'This cannot be undone.',
+    modeLearnDesc: 'Study at your own pace with instant feedback',
+    modeExamDesc: '32-question simulation with time limit and scoring',
+    mediaUnavailable: 'Media unavailable',
   },
 };
 

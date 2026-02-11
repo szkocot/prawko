@@ -57,19 +57,16 @@ export function saveLearnAnswer(category, questionId, answer) {
     data[category] = {};
     oldArr.forEach(id => { data[category][id] = null; });
   }
-  if (!(questionId in data[category])) {
-    data[category][questionId] = answer || null;
-    try {
-      localStorage.setItem(LEARN_KEY, JSON.stringify(data));
-      return true;
-    } catch (e) {
-      if (e?.name === 'QuotaExceededError' || e?.code === 22) {
-        console.warn('localStorage quota exceeded while saving learn progress:', e);
-      }
-      return false;
+  data[category][questionId] = answer || null;
+  try {
+    localStorage.setItem(LEARN_KEY, JSON.stringify(data));
+    return true;
+  } catch (e) {
+    if (e?.name === 'QuotaExceededError' || e?.code === 22) {
+      console.warn('localStorage quota exceeded while saving learn progress:', e);
     }
+    return false;
   }
-  return true;
 }
 
 function loadLearnData() {
