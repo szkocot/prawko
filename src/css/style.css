@@ -137,12 +137,21 @@ html {
 body {
   font-family: var(--font-body);
   background: var(--bg);
+  background-image:
+    radial-gradient(1200px 500px at -10% -10%, rgba(99, 102, 241, 0.08), transparent 60%),
+    radial-gradient(900px 420px at 110% 0%, rgba(245, 158, 11, 0.08), transparent 62%);
   color: var(--text);
   line-height: 1.6;
   min-height: 100vh;
   padding-bottom: 48px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme="dark"] body {
+  background-image:
+    radial-gradient(1200px 520px at -10% -10%, rgba(129, 140, 248, 0.18), transparent 62%),
+    radial-gradient(900px 420px at 110% 0%, rgba(251, 191, 36, 0.08), transparent 60%);
 }
 
 body::before {
@@ -277,10 +286,11 @@ section.active {
   background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
   color: #ffffff;
   text-align: center;
-  padding: 48px 20px 56px;
+  padding: 54px 20px 64px;
   border-radius: 0 0 28px 28px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 18px 36px rgba(79, 70, 229, 0.28);
 }
 
 /* Road-motif pattern overlay */
@@ -329,16 +339,16 @@ section.active {
   z-index: 100;
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 4px;
+  border-radius: 14px;
+  padding: 5px;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.8);
   box-shadow: var(--shadow);
 }
 
 :root[data-theme="dark"] .top-controls {
-  background: rgba(24, 24, 27, 0.85);
+  background: rgba(24, 24, 27, 0.8);
 }
 
 .theme-btn {
@@ -403,6 +413,7 @@ section.active {
   line-height: 1.1;
   margin-bottom: 12px;
   position: relative;
+  text-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
 }
 
 .hero p {
@@ -442,8 +453,8 @@ section.active {
 .features {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 16px 20px;
+  gap: 12px;
+  padding: 20px 20px 10px;
   max-width: var(--max-width);
   margin: 0 auto;
 }
@@ -452,7 +463,8 @@ section.active {
   background: var(--bg-card);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
-  padding: 16px;
+  border: 1px solid var(--border);
+  padding: 16px 14px;
   text-align: center;
   transition: transform var(--duration-normal) var(--ease-out), box-shadow var(--duration-normal) var(--ease-out);
   animation: fadeInUp 0.5s var(--ease-out) both;
@@ -465,20 +477,23 @@ section.active {
 .feature-card:nth-child(5) { animation-delay: 240ms; }
 
 .feature-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
 }
 
 .feature-card .feature-icon {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   color: var(--primary);
-  margin: 0 auto 8px;
+  margin: 0 auto 10px;
   display: block;
+  padding: 7px;
+  border-radius: 10px;
+  background: rgba(99, 102, 241, 0.12);
 }
 
 .feature-card h3 {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   font-weight: 700;
   margin-bottom: 4px;
   color: var(--primary);
@@ -495,6 +510,7 @@ section.active {
   background: var(--bg-card);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
+  border: 1px solid var(--border);
   padding: 24px;
   margin: 8px 20px 32px;
   max-width: var(--max-width);
@@ -598,11 +614,12 @@ footer a {
 
 .category-search-input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px 14px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 12px;
   background: var(--bg-card);
   color: var(--text);
+  box-shadow: var(--shadow);
 }
 
 .category-search-input:focus {
@@ -644,6 +661,7 @@ footer a {
   background: var(--bg-card);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
+  border: 1px solid var(--border);
   padding: 20px;
   border-left: 4px solid var(--primary);
   cursor: pointer;
@@ -670,7 +688,7 @@ footer a {
 }
 
 .category-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-lg);
 }
 
@@ -1482,11 +1500,11 @@ footer a {
 /* Home navigation */
 .home-nav {
   text-align: center;
-  padding: 16px 20px 32px;
+  padding: 20px 20px 28px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 /* Screen header with back button */
@@ -1607,7 +1625,8 @@ footer a {
 
 /* Footer attribution */
 .footer-attribution {
-  margin-top: 4px;
+  margin-top: 6px;
+  opacity: 0.9;
 }
 
 /* ==========================================================================
@@ -1719,7 +1738,7 @@ footer a {
 
 /* Generic buttons */
 .btn {
-  padding: 10px 24px;
+  padding: 11px 24px;
   border-radius: var(--radius-sm);
   font-weight: 600;
   font-size: 0.95rem;
@@ -1734,6 +1753,7 @@ footer a {
   background: var(--primary);
   color: #ffffff;
   box-shadow: var(--shadow-primary);
+  border: 1px solid transparent;
 }
 
 .btn-primary:hover {
@@ -1745,7 +1765,7 @@ footer a {
 .btn-secondary {
   background: var(--bg);
   color: var(--primary);
-  border: 2px solid var(--border);
+  border: 1px solid var(--border);
 }
 
 .btn-secondary:hover {
@@ -1766,6 +1786,9 @@ footer a {
 .btn-link {
   color: var(--text-secondary);
   background: none;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 
 .btn-link:hover {
