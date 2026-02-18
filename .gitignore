@@ -23,10 +23,6 @@ src/media/vid/
 node_modules/
 test-results/
 playwright-report/
-package.json
-package-lock.json
-playwright.config.js
-tests/
 
 # Codex (keep skills tracked)
 .codex/*

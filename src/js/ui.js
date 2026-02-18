@@ -136,7 +136,10 @@ export function renderQuestion(question, container) {
       };
       img.src = `${MEDIA_BASE}/img/${encodeURIComponent(q.media)}`;
       img.alt = t('imgAlt');
-      img.loading = 'eager';
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.width = 1280;
+      img.height = 720;
       mediaArea.appendChild(img);
     }
   }

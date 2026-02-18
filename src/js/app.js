@@ -5,7 +5,7 @@ import { startExam, setupExamListeners, cleanupExam, getLastExamCategory, refres
 import { startLearn, setupLearnListeners, cleanupLearn, refreshLearnQuestion } from './learn.js';
 import { showScreen, renderCategories, applyLanguage, renderHistory, showConfirmModal } from './ui.js';
 import { setLang, getLang, loadQuestionTranslations, t } from './i18n.js';
-import { downloadCategoryMedia, getDownloadedCategories } from './offline.js';
+import { downloadCategoryMedia, getDownloadedCategories, reconcileDownloadedCategories } from './offline.js';
 import { clearHistory } from './stats.js';
 
 let meta = null;
@@ -72,6 +72,37 @@ function handleCategorySelect(categoryId) {
   navigate('quiz');
 }
 
+function updateLanguageButtons(lang) {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('.lang-btn').forEach((btn) => {
+    const isActive = btn.dataset.lang === lang;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('role', 'radio');
+    btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+  });
+}
+
+function getInitialTheme() {
+  try {
+    const stored = localStorage.getItem('prawko_theme');
+    if (stored === 'dark' || stored === 'light') return stored;
+  } catch {}
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme, themeIcon, themeBtn) {
+  const isDark = theme === 'dark';
+  if (isDark) document.documentElement.setAttribute('data-theme', 'dark');
+  else document.documentElement.removeAttribute('data-theme');
+  if (themeIcon) themeIcon.innerHTML = isDark ? '<use href="#icon-sun"/>' : '<use href="#icon-moon"/>';
+  if (themeBtn) themeBtn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
+}
+
+function showUpdateBanner() {
+  const banner = document.getElementById('update-banner');
+  if (banner) banner.style.display = '';
+}
+
 // ---- Init ----
 async function init() {
   // Load metadata
@@ -79,6 +110,11 @@ async function init() {
   try {
     meta = await fetchMeta();
     renderCategories(meta, getDownloadedCategories());
+    reconcileDownloadedCategories()
+      .then((verifiedSet) => {
+        if (meta) renderCategories(meta, verifiedSet);
+      })
+      .catch(() => {});
     if (spinner) spinner.classList.add('hidden');
   } catch {
     if (spinner) spinner.classList.add('hidden');
@@ -127,40 +163,28 @@ async function init() {
   });
 
   // Theme toggle
-  const savedTheme = localStorage.getItem('prawko_theme') || 'light';
-  if (savedTheme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
   const themeBtn = document.querySelector('.theme-btn');
-  const themeIcon = themeBtn.querySelector('.theme-icon');
-  if (savedTheme === 'dark') themeIcon.innerHTML = '<use href="#icon-sun"/>';
-  themeBtn.addEventListener('click', () => {
+  const themeIcon = themeBtn?.querySelector('.theme-icon');
+  applyTheme(getInitialTheme(), themeIcon, themeBtn);
+  themeBtn?.addEventListener('click', () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-    if (isDark) {
-      document.documentElement.removeAttribute('data-theme');
-      themeIcon.innerHTML = '<use href="#icon-moon"/>';
-      try { localStorage.setItem('prawko_theme', 'light'); } catch {}
-    } else {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      themeIcon.innerHTML = '<use href="#icon-sun"/>';
-      try { localStorage.setItem('prawko_theme', 'dark'); } catch {}
-    }
+    const nextTheme = isDark ? 'light' : 'dark';
+    applyTheme(nextTheme, themeIcon, themeBtn);
+    try { localStorage.setItem('prawko_theme', nextTheme); } catch {}
   });
 
   // Language toggle
   const savedLang = getLang();
+  updateLanguageButtons(savedLang);
   if (savedLang !== 'pl') {
     setLang(savedLang);
     applyLanguage();
     await loadQuestionTranslations();
   }
   document.querySelectorAll('.lang-btn').forEach(btn => {
-    if (btn.dataset.lang === savedLang) {
-      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
     btn.addEventListener('click', async () => {
       const lang = btn.dataset.lang;
-      document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      updateLanguageButtons(lang);
       setLang(lang);
       applyLanguage();
       renderCategories(meta, getDownloadedCategories());
@@ -188,19 +212,27 @@ async function init() {
     dlBtn.style.setProperty('--dl-progress', '0');
 
     try {
-      await downloadCategoryMedia(catId, (done, total) => {
+      const result = await downloadCategoryMedia(catId, (done, total) => {
         const pct = Math.round((done / total) * 100);
         dlBtn.textContent = `\u2193 ${pct}%`;
         dlBtn.style.setProperty('--dl-progress', String(pct));
       });
+      await reconcileDownloadedCategories();
       dlBtn.classList.remove('downloading');
-      dlBtn.classList.add('downloaded');
       dlBtn.style.removeProperty('--dl-progress');
-      dlBtn.textContent = `\u2713 ${t('savedOffline')}`;
+      if (result.success) {
+        dlBtn.classList.add('downloaded');
+        dlBtn.textContent = `\u2713 ${t('savedOffline')}`;
+      } else {
+        dlBtn.classList.remove('downloaded');
+        dlBtn.textContent = `\u2193 ${t('saveOffline')}`;
+      }
+      renderCategories(meta, getDownloadedCategories());
     } catch {
       dlBtn.classList.remove('downloading');
       dlBtn.style.removeProperty('--dl-progress');
       dlBtn.textContent = `\u2193 ${t('saveOffline')}`;
+      renderCategories(meta, getDownloadedCategories());
     }
   });
 
@@ -221,20 +253,43 @@ async function init() {
   handleRoute();
 
   // Register service worker
+  let swRegistration = null;
+  let isReloadingForSw = false;
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(err => console.warn('SW registration failed:', err));
+    swRegistration = await navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(err => {
+      console.warn('SW registration failed:', err);
+      return null;
+    });
+    if (swRegistration?.waiting) showUpdateBanner();
+    swRegistration?.addEventListener('updatefound', () => {
+      const candidate = swRegistration.installing;
+      if (!candidate) return;
+      candidate.addEventListener('statechange', () => {
+        if (candidate.state === 'installed' && navigator.serviceWorker.controller) {
+          showUpdateBanner();
+        }
+      });
+    });
 
     // Listen for update notifications from SW
     navigator.serviceWorker.addEventListener('message', (event) => {
       if (event.data?.type === 'APP_UPDATED' || event.data?.type === 'DATA_UPDATED') {
-        const banner = document.getElementById('update-banner');
-        if (banner) banner.style.display = '';
+        showUpdateBanner();
       }
+    });
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (isReloadingForSw) return;
+      isReloadingForSw = true;
+      location.reload();
     });
   }
 
   // Update banner reload
   document.getElementById('update-banner-btn')?.addEventListener('click', () => {
+    if (swRegistration?.waiting) {
+      swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+      return;
+    }
     location.reload();
   });
 
