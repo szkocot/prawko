@@ -105,42 +105,61 @@ export function renderQuestion(question, container) {
 
   if (q.media) {
     mediaArea.classList.add('has-media', 'loading');
+    const showMediaFallback = (onRetry) => {
+      mediaArea.classList.remove('loading');
+      mediaArea.innerHTML = '';
+
+      const fallback = document.createElement('div');
+      fallback.className = 'media-fallback';
+
+      const p = document.createElement('p');
+      p.className = 'media-unavailable';
+      p.textContent = t('mediaUnavailable');
+
+      const retryBtn = document.createElement('button');
+      retryBtn.type = 'button';
+      retryBtn.className = 'btn btn-secondary media-retry-btn';
+      retryBtn.textContent = t('retry');
+      retryBtn.addEventListener('click', onRetry);
+
+      fallback.append(p, retryBtn);
+      mediaArea.appendChild(fallback);
+    };
+
     if (q.mediaType === 'video') {
-      const video = document.createElement('video');
-      video.controls = true;
-      video.playsInline = true;
-      video.preload = 'metadata';
-      video.muted = true;
-      video.autoplay = true;
-      video.onloadeddata = () => mediaArea.classList.remove('loading');
-      video.onerror = () => {
-        mediaArea.classList.remove('loading');
+      const loadVideo = () => {
+        mediaArea.classList.add('loading');
         mediaArea.innerHTML = '';
-        const p = document.createElement('p');
-        p.className = 'media-unavailable';
-        p.textContent = t('mediaUnavailable');
-        mediaArea.appendChild(p);
+
+        const video = document.createElement('video');
+        video.controls = true;
+        video.playsInline = true;
+        video.preload = 'metadata';
+        video.muted = true;
+        video.autoplay = true;
+        video.onloadeddata = () => mediaArea.classList.remove('loading');
+        video.onerror = () => showMediaFallback(loadVideo);
+        video.src = `${MEDIA_BASE}/vid/${encodeURIComponent(q.media)}`;
+        mediaArea.appendChild(video);
       };
-      video.src = `${MEDIA_BASE}/vid/${encodeURIComponent(q.media)}`;
-      mediaArea.appendChild(video);
+      loadVideo();
     } else if (q.mediaType === 'image') {
-      const img = document.createElement('img');
-      img.onload = () => mediaArea.classList.remove('loading');
-      img.onerror = () => {
-        mediaArea.classList.remove('loading');
+      const loadImage = () => {
+        mediaArea.classList.add('loading');
         mediaArea.innerHTML = '';
-        const p = document.createElement('p');
-        p.className = 'media-unavailable';
-        p.textContent = t('mediaUnavailable');
-        mediaArea.appendChild(p);
+
+        const img = document.createElement('img');
+        img.onload = () => mediaArea.classList.remove('loading');
+        img.onerror = () => showMediaFallback(loadImage);
+        img.src = `${MEDIA_BASE}/img/${encodeURIComponent(q.media)}`;
+        img.alt = t('imgAlt');
+        img.loading = 'lazy';
+        img.decoding = 'async';
+        img.width = 1280;
+        img.height = 720;
+        mediaArea.appendChild(img);
       };
-      img.src = `${MEDIA_BASE}/img/${encodeURIComponent(q.media)}`;
-      img.alt = t('imgAlt');
-      img.loading = 'lazy';
-      img.decoding = 'async';
-      img.width = 1280;
-      img.height = 720;
-      mediaArea.appendChild(img);
+      loadImage();
     }
   }
 
@@ -280,8 +299,13 @@ export function preloadMedia(question) {
     const img = new Image();
     img.src = url;
   } else {
-    // Use fetch for cross-browser video preloading (Firefox doesn't support <link rel=preload as=video>)
-    fetch(url, { mode: 'no-cors' }).catch(() => {});
+    // Warm up video metadata without fetch; cross-origin fetch preloads require CORS headers.
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.muted = true;
+    video.playsInline = true;
+    video.src = url;
+    video.load();
   }
 }
 

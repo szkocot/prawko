@@ -11,6 +11,8 @@ import { clearHistory } from './stats.js';
 let meta = null;
 let currentMode = 'learn'; // 'learn' or 'exam'
 let pendingCategory = null;
+const RECENT_CATEGORIES_KEY = 'prawko_recent_categories';
+const RECENT_CATEGORIES_LIMIT = 4;
 
 // ---- Router ----
 function navigate(screen) {
@@ -18,6 +20,94 @@ function navigate(screen) {
 }
 
 const VALID_SCREENS = new Set(['home', 'categories', 'quiz', 'results', 'history', 'zrodlo-danych']);
+
+function focusCurrentScreenHeading(screenId) {
+  const screen = document.getElementById(screenId);
+  const heading = screen?.querySelector('h1, h2');
+  if (!heading) return;
+  const hadTabIndex = heading.hasAttribute('tabindex');
+  if (!hadTabIndex) heading.setAttribute('tabindex', '-1');
+  heading.focus({ preventScroll: true });
+  if (!hadTabIndex) {
+    heading.addEventListener('blur', () => heading.removeAttribute('tabindex'), { once: true });
+  }
+}
+
+function getAvailableCategoryIds() {
+  return new Set((meta?.categories || []).map(cat => cat.id));
+}
+
+function loadRecentCategories() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(RECENT_CATEGORIES_KEY) || '[]');
+    return Array.isArray(parsed) ? parsed.filter(id => typeof id === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveRecentCategories(ids) {
+  try { localStorage.setItem(RECENT_CATEGORIES_KEY, JSON.stringify(ids)); } catch {}
+}
+
+function addRecentCategory(categoryId) {
+  const next = [categoryId, ...loadRecentCategories().filter(id => id !== categoryId)].slice(0, RECENT_CATEGORIES_LIMIT);
+  saveRecentCategories(next);
+}
+
+function syncCategoryCardVisibility() {
+  const available = getAvailableCategoryIds();
+  document.querySelectorAll('.category-grid .category-card').forEach((card) => {
+    card.hidden = !available.has(card.dataset.category);
+  });
+}
+
+function applyCategorySearch() {
+  const searchInput = document.getElementById('category-search');
+  const query = (searchInput?.value || '').trim().toLowerCase();
+  document.querySelectorAll('#categories .category-card').forEach((card) => {
+    if (card.closest('.category-grid') && card.hidden) return;
+    const text = `${card.dataset.category || ''} ${card.querySelector('.category-name')?.textContent || ''}`.toLowerCase();
+    card.style.display = !query || text.includes(query) ? '' : 'none';
+  });
+  const recentSection = document.getElementById('recent-categories');
+  const recentRow = document.getElementById('recent-categories-row');
+  if (!recentSection || !recentRow) return;
+  const hasVisibleRecent = [...recentRow.querySelectorAll('.category-card')].some(card => card.style.display !== 'none');
+  recentSection.hidden = recentRow.children.length === 0 || !hasVisibleRecent;
+}
+
+function renderRecentCategories() {
+  const recentSection = document.getElementById('recent-categories');
+  const recentRow = document.getElementById('recent-categories-row');
+  if (!recentSection || !recentRow) return;
+  const available = getAvailableCategoryIds();
+  const ids = loadRecentCategories().filter(id => available.has(id)).slice(0, RECENT_CATEGORIES_LIMIT);
+  recentRow.textContent = '';
+  ids.forEach((id) => {
+    const sourceCard = document.querySelector(`.category-grid .category-card[data-category="${CSS.escape(id)}"]`);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'category-card recent-category-card';
+    btn.dataset.category = id;
+    const letter = document.createElement('span');
+    letter.className = 'category-letter';
+    letter.textContent = sourceCard?.querySelector('.category-letter')?.textContent || id;
+    const name = document.createElement('span');
+    name.className = 'category-name';
+    name.textContent = sourceCard?.querySelector('.category-name')?.textContent || id;
+    btn.append(letter, name);
+    recentRow.appendChild(btn);
+  });
+  recentSection.hidden = ids.length === 0;
+}
+
+function applyCategoryUiTranslations() {
+  const searchInput = document.getElementById('category-search');
+  if (!searchInput) return;
+  searchInput.placeholder = t('categoriesSearchPlaceholder');
+  searchInput.setAttribute('aria-label', t('categoriesSearchLabel'));
+}
 
 function handleRoute() {
   const hash = window.location.hash.slice(1) || 'home';
@@ -38,6 +128,7 @@ function handleRoute() {
     const cat = pendingCategory;
     pendingCategory = null;
     showScreen('quiz');
+    focusCurrentScreenHeading('quiz');
     launchSession(cat);
     return;
   }
@@ -48,9 +139,15 @@ function handleRoute() {
     return;
   }
 
-  if (hash === 'categories' && meta) renderCategories(meta, getDownloadedCategories());
+  if (hash === 'categories' && meta) {
+    renderCategories(meta, getDownloadedCategories());
+    syncCategoryCardVisibility();
+    renderRecentCategories();
+    applyCategorySearch();
+  }
   if (hash === 'history') renderHistory();
   showScreen(hash);
+  focusCurrentScreenHeading(hash);
 }
 
 // ---- Category & Mode Selection ----
@@ -68,6 +165,7 @@ async function launchSession(categoryId) {
 }
 
 function handleCategorySelect(categoryId) {
+  addRecentCategory(categoryId);
   pendingCategory = categoryId;
   navigate('quiz');
 }
@@ -110,9 +208,16 @@ async function init() {
   try {
     meta = await fetchMeta();
     renderCategories(meta, getDownloadedCategories());
+    syncCategoryCardVisibility();
+    renderRecentCategories();
     reconcileDownloadedCategories()
       .then((verifiedSet) => {
-        if (meta) renderCategories(meta, verifiedSet);
+        if (meta) {
+          renderCategories(meta, verifiedSet);
+          syncCategoryCardVisibility();
+          renderRecentCategories();
+          applyCategorySearch();
+        }
       })
       .catch(() => {});
     if (spinner) spinner.classList.add('hidden');
@@ -145,12 +250,17 @@ async function init() {
     });
   });
 
-  // Category cards
-  document.querySelectorAll('.category-card').forEach(card => {
-    card.addEventListener('click', () => {
-      handleCategorySelect(card.dataset.category);
-    });
+  // Category cards (main grid + recent row)
+  document.getElementById('categories')?.addEventListener('click', (e) => {
+    const card = e.target.closest('.category-card');
+    if (!card || e.target.closest('.offline-btn')) return;
+    const categoryId = card.dataset.category;
+    if (!categoryId) return;
+    if (card.closest('.category-grid') && card.hidden) return;
+    handleCategorySelect(categoryId);
   });
+
+  document.getElementById('category-search')?.addEventListener('input', applyCategorySearch);
 
   // Retry button
   document.querySelector('.btn-retry')?.addEventListener('click', async () => {
@@ -188,6 +298,10 @@ async function init() {
       setLang(lang);
       applyLanguage();
       renderCategories(meta, getDownloadedCategories());
+      syncCategoryCardVisibility();
+      renderRecentCategories();
+      applyCategoryUiTranslations();
+      applyCategorySearch();
       if (lang === 'en') await loadQuestionTranslations();
       // Re-render current question if on quiz screen
       if (document.getElementById('quiz').classList.contains('active')) {
@@ -228,11 +342,17 @@ async function init() {
         dlBtn.textContent = `\u2193 ${t('saveOffline')}`;
       }
       renderCategories(meta, getDownloadedCategories());
+      syncCategoryCardVisibility();
+      renderRecentCategories();
+      applyCategorySearch();
     } catch {
       dlBtn.classList.remove('downloading');
       dlBtn.style.removeProperty('--dl-progress');
       dlBtn.textContent = `\u2193 ${t('saveOffline')}`;
       renderCategories(meta, getDownloadedCategories());
+      syncCategoryCardVisibility();
+      renderRecentCategories();
+      applyCategorySearch();
     }
   });
 
@@ -247,6 +367,9 @@ async function init() {
   // Setup exam and learn listeners
   setupExamListeners();
   setupLearnListeners();
+  applyCategoryUiTranslations();
+  renderRecentCategories();
+  applyCategorySearch();
 
   // Hash routing
   window.addEventListener('hashchange', handleRoute);

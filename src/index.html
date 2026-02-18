@@ -147,6 +147,23 @@
         <button class="btn btn-link btn-history-link" data-navigate="history" data-i18n="examHistory">Historia egzaminów</button>
       </div>
 
+      <div class="category-search-wrap">
+        <label for="category-search" class="sr-only" data-i18n="categoriesSearchLabel">Szukaj kategorii</label>
+        <input
+          id="category-search"
+          class="category-search-input"
+          type="search"
+          autocomplete="off"
+          placeholder="Szukaj kategorii"
+          aria-label="Szukaj kategorii"
+        >
+      </div>
+
+      <section id="recent-categories" class="recent-categories" hidden>
+        <h3 class="recent-categories-title" data-i18n="recentCategories">Ostatnio wybierane</h3>
+        <div id="recent-categories-row" class="recent-categories-row"></div>
+      </section>
+
       <div class="category-grid">
         <button class="category-card" data-category="A">
           <span class="category-letter">A</span>
