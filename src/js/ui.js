@@ -281,7 +281,7 @@ export function preloadMedia(question) {
     img.src = url;
   } else {
     // Use fetch for cross-browser video preloading (Firefox doesn't support <link rel=preload as=video>)
-    fetch(url).catch(() => {});
+    fetch(url, { mode: 'no-cors' }).catch(() => {});
   }
 }
 

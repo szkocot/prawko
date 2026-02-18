@@ -47,6 +47,7 @@ self.addEventListener('fetch', (event) => {
 
   if (event.request.method !== 'GET') return;
   if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+  if (url.origin !== self.location.origin) return;
 
   // Category JSON & translation files — stale-while-revalidate
   if (url.pathname.match(/\/data\/(?!meta\.json).+\.json$/)) {
@@ -64,7 +65,7 @@ self.addEventListener('fetch', (event) => {
                   notifyClients({ type: 'DATA_UPDATED' });
                 }
               }
-              cache.put(event.request, response.clone());
+              safeCachePut(cache, event.request, response.clone());
             }
             return response;
           }).catch(() => cached);
@@ -75,15 +76,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Media files (external B2 or local) — cache-first, cached on demand, LRU eviction
-  if (url.hostname.includes('backblazeb2.com') || url.pathname.match(/\/media\//)) {
+  // Local media files — cache-first, cached on demand, LRU eviction
+  if (url.pathname.match(/\/media\//)) {
     event.respondWith(
       caches.open(MEDIA_CACHE).then((cache) =>
         cache.match(event.request).then((cached) => {
           if (cached) return cached;
           return fetch(event.request).then((response) => {
-            if (response.ok) {
-              cache.put(event.request, response.clone()).then(() =>
+            if (response.ok || response.type === 'opaque') {
+              safeCachePut(cache, event.request, response.clone()).then(() =>
                 cache.keys().then((keys) => {
                   if (keys.length > MEDIA_CACHE_LIMIT) {
                     const toDelete = keys.slice(0, keys.length - MEDIA_CACHE_LIMIT);
@@ -117,7 +118,7 @@ self.addEventListener('fetch', (event) => {
                 notifyClients({ type: 'APP_UPDATED' });
               }
             }
-            cache.put(event.request, response.clone());
+            safeCachePut(cache, event.request, response.clone());
           }
           return response;
         }).catch(() => cached || caches.match('./index.html'));
@@ -137,4 +138,12 @@ function notifyClients(message) {
   self.clients.matchAll({ type: 'window' }).then((clients) => {
     clients.forEach((client) => client.postMessage(message));
   });
+}
+
+function safeCachePut(cache, request, response) {
+  const requestUrl = new URL(request.url);
+  if (requestUrl.protocol !== 'http:' && requestUrl.protocol !== 'https:') {
+    return Promise.resolve();
+  }
+  return cache.put(request, response).catch(() => Promise.resolve());
 }
