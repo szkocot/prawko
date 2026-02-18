@@ -26,14 +26,14 @@
 - `src/data/translations_en.json` — English translations keyed by question ID
 - Language persisted in `localStorage` key `prawko_lang`
 - Question translations lazy-loaded only when EN is selected
-- To add a new language, use the `translate-questions` skill (`.claude/skills/translate-questions/`)
+- To add a new language, use the `translate-questions` skill (`.codex/skills/translate-questions/`)
 
 ## File Structure
 - `src/js/` — app.js (router), data.js, exam.js, learn.js, ui.js, timer.js, stats.js, i18n.js
 - `src/data/` — meta.json, {category}.json, translations_en.json
 - `src/media/` — img/ (WebP), vid/ (MP4) — Git LFS
 - `scripts/` — parse-excel.py, convert-videos.sh, optimize-images.sh, filter-no-media.py, upload-media.sh
-- `.claude/skills/translate-questions/` — skill for translating questions to new languages
+- `.codex/skills/translate-questions/` — skill for translating questions to new languages
 
 ## Data Pipeline
 ```bash

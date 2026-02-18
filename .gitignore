@@ -28,6 +28,7 @@ package-lock.json
 playwright.config.js
 tests/
 
-# Claude (keep skills tracked)
-.claude/*
-!.claude/skills/
+# Codex (keep skills tracked)
+.codex/*
+!.codex/skills/
+!.codex/skills/**
