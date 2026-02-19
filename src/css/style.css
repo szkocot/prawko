@@ -1608,7 +1608,7 @@ footer a {
 
 /* Screen header with back button */
 .screen-header {
-  padding: 18px 20px 14px;
+  padding: 72px 20px 14px;
   max-width: var(--max-width);
   margin: 0 auto;
 }
@@ -2256,6 +2256,10 @@ button:focus-visible,
    Responsive — Tablet (768px+)
    ========================================================================== */
 @media (min-width: 768px) {
+  .screen-header {
+    padding-top: 20px;
+  }
+
   .hero {
     padding: 64px 40px 72px;
     border-radius: 0 0 36px 36px;

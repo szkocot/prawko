@@ -194,6 +194,19 @@ export function renderQuestion(question, container) {
 
   if (q.media) {
     mediaArea.classList.add('has-media', 'loading');
+    const mediaCandidates = [
+      `${MEDIA_BASE}/${q.mediaType === 'video' ? 'vid' : 'img'}/${encodeURIComponent(q.media)}`,
+      `${MEDIA_BASE}/${q.mediaType === 'video' ? 'vid' : 'img'}/${q.media}`,
+    ];
+
+    let candidateIndex = 0;
+    const getNextMediaUrl = () => {
+      if (candidateIndex >= mediaCandidates.length) return null;
+      const url = mediaCandidates[candidateIndex];
+      candidateIndex += 1;
+      return url;
+    };
+
     const showMediaFallback = (onRetry) => {
       mediaArea.classList.remove('loading');
       mediaArea.innerHTML = '';
@@ -217,6 +230,15 @@ export function renderQuestion(question, container) {
 
     if (q.mediaType === 'video') {
       const loadVideo = () => {
+        const mediaUrl = getNextMediaUrl();
+        if (!mediaUrl) {
+          showMediaFallback(() => {
+            candidateIndex = 0;
+            loadVideo();
+          });
+          return;
+        }
+
         mediaArea.classList.add('loading');
         mediaArea.innerHTML = '';
 
@@ -227,20 +249,29 @@ export function renderQuestion(question, container) {
         video.muted = true;
         video.autoplay = true;
         video.onloadeddata = () => mediaArea.classList.remove('loading');
-        video.onerror = () => showMediaFallback(loadVideo);
-        video.src = `${MEDIA_BASE}/vid/${encodeURIComponent(q.media)}`;
+        video.onerror = () => loadVideo();
+        video.src = mediaUrl;
         mediaArea.appendChild(video);
       };
       loadVideo();
     } else if (q.mediaType === 'image') {
       const loadImage = () => {
+        const mediaUrl = getNextMediaUrl();
+        if (!mediaUrl) {
+          showMediaFallback(() => {
+            candidateIndex = 0;
+            loadImage();
+          });
+          return;
+        }
+
         mediaArea.classList.add('loading');
         mediaArea.innerHTML = '';
 
         const img = document.createElement('img');
         img.onload = () => mediaArea.classList.remove('loading');
-        img.onerror = () => showMediaFallback(loadImage);
-        img.src = `${MEDIA_BASE}/img/${encodeURIComponent(q.media)}`;
+        img.onerror = () => loadImage();
+        img.src = mediaUrl;
         img.alt = t('imgAlt');
         img.loading = 'lazy';
         img.decoding = 'async';
