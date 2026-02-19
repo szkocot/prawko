@@ -149,14 +149,21 @@
 
       <div class="category-search-wrap">
         <label for="category-search" class="sr-only" data-i18n="categoriesSearchLabel">Szukaj kategorii</label>
-        <input
-          id="category-search"
-          class="category-search-input"
-          type="search"
-          autocomplete="off"
-          placeholder="Szukaj kategorii"
-          aria-label="Szukaj kategorii"
-        >
+        <div class="category-search-shell">
+          <span class="category-search-icon" aria-hidden="true">&#128269;</span>
+          <input
+            id="category-search"
+            class="category-search-input"
+            type="search"
+            autocomplete="off"
+            placeholder="Szukaj kategorii"
+            aria-label="Szukaj kategorii"
+          >
+          <button id="category-search-clear" class="category-search-clear" type="button" aria-label="Wyczyść wyszukiwanie" hidden>
+            &#10005;
+          </button>
+        </div>
+        <p id="category-search-status" class="category-search-status" aria-live="polite"></p>
       </div>
 
       <section id="recent-categories" class="recent-categories" hidden>
@@ -226,6 +233,11 @@
           <span class="question-count"></span>
         </button>
       </div>
+
+      <div id="category-empty-state" class="category-empty-state" hidden>
+        <h3 id="category-empty-title"></h3>
+        <p id="category-empty-description"></p>
+      </div>
     </section>
 
     <!-- ===== 3. QUIZ SCREEN ===== -->
@@ -243,12 +255,22 @@
             <span class="total-timer" aria-label="Czas egzaminu">00:00</span>
           </div>
         </div>
-        <span class="question-progress" aria-live="polite">1 / 32</span>
-        <span class="learn-stats" aria-live="polite"></span>
       </header>
 
       <div class="progress-bar">
         <div class="progress-fill"></div>
+      </div>
+
+      <div class="quiz-legend-bar">
+        <span id="quiz-mode-pill" class="quiz-mode-pill">Tryb</span>
+        <span class="question-progress" aria-live="polite">1 / 32</span>
+        <span class="learn-stats" aria-live="polite"></span>
+        <div class="quiz-points-legend" aria-label="Punktacja pytań">
+          <span class="quiz-points-label">pkt:</span>
+          <span class="quiz-points-badge">3</span>
+          <span class="quiz-points-badge">2</span>
+          <span class="quiz-points-badge">1</span>
+        </div>
       </div>
 
       <article class="question-card" aria-label="Pytanie egzaminacyjne">

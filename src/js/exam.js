@@ -9,6 +9,10 @@ let state = null;
 let lastExamCategory = null;
 let answerDelegateHandler = null;
 let keydownHandler = null;
+let beforeUnloadHandler = null;
+let pendingAdvanceTimeout = null;
+
+const ANSWER_ADVANCE_DELAY_MS = 600;
 
 export function getLastExamCategory() { return lastExamCategory; }
 
@@ -30,6 +34,86 @@ function removeAnswerDelegate() {
     }
     answerDelegateHandler = null;
   }
+}
+
+function clearPendingAdvance() {
+  if (!pendingAdvanceTimeout) return;
+  clearTimeout(pendingAdvanceTimeout);
+  pendingAdvanceTimeout = null;
+}
+
+function queueAdvance(delayMs = ANSWER_ADVANCE_DELAY_MS) {
+  clearPendingAdvance();
+  pendingAdvanceTimeout = window.setTimeout(() => {
+    pendingAdvanceTimeout = null;
+    advanceQuestion();
+  }, delayMs);
+}
+
+function isActiveExam() {
+  return Boolean(state && state.started && !state.finished);
+}
+
+function setupBeforeUnloadWarning() {
+  if (beforeUnloadHandler) return;
+  beforeUnloadHandler = (event) => {
+    if (!isActiveExam()) return;
+    event.preventDefault();
+    event.returnValue = '';
+  };
+  window.addEventListener('beforeunload', beforeUnloadHandler);
+}
+
+function teardownBeforeUnloadWarning() {
+  if (!beforeUnloadHandler) return;
+  window.removeEventListener('beforeunload', beforeUnloadHandler);
+  beforeUnloadHandler = null;
+}
+
+function disableAnswerButtons() {
+  document.querySelector('.answers')?.querySelectorAll('.answer-btn').forEach((btn) => {
+    btn.disabled = true;
+  });
+}
+
+function lockCurrentQuestion({ answer = null, timedOut = false } = {}) {
+  if (!state || state.finished || !state.started) return false;
+  const item = state.questions[state.currentIndex];
+  if (!item || item.locked) return false;
+
+  item.locked = true;
+  item.timedOut = timedOut;
+
+  if (answer !== null) {
+    item.given = answer;
+    item.isCorrect = answer === item.question.correct;
+  }
+
+  state.questionTimer.stop();
+  disableAnswerButtons();
+  return true;
+}
+
+function cancelExamIntroIfPending() {
+  if (!state || state.finished || state.started || !state.introPending) return false;
+  cleanupExam();
+  window.location.hash = 'categories';
+  return true;
+}
+
+function showExamIntroNotice() {
+  if (!state || state.finished) return;
+  state.introPending = true;
+  const introDesc = `${t('examIntroDesc')} ${t('modeExamDesc')}.`;
+  showConfirmModal(t('examIntroTitle'), introDesc, () => {
+    if (!state || state.finished) return;
+    state.introPending = false;
+    state.started = true;
+    document.querySelector('.btn-end-exam').classList.add('visible');
+    setupBeforeUnloadWarning();
+    showQuestion();
+    state.examTimer.start();
+  });
 }
 
 export function startExam(categoryData, meta) {
@@ -71,6 +155,8 @@ export function startExam(categoryData, meta) {
       points: rules.basicPoints[i] || 1,
       given: null,
       isCorrect: false,
+      locked: false,
+      timedOut: false,
     });
   });
   selectedSpecialist.forEach((q, i) => {
@@ -79,6 +165,8 @@ export function startExam(categoryData, meta) {
       points: rules.specialistPoints[i] || 1,
       given: null,
       isCorrect: false,
+      locked: false,
+      timedOut: false,
     });
   });
 
@@ -89,6 +177,8 @@ export function startExam(categoryData, meta) {
     rules,
     questionTimer: null,
     examTimer: null,
+    started: false,
+    introPending: false,
     finished: false,
   };
 
@@ -103,7 +193,10 @@ export function startExam(categoryData, meta) {
       questionTimerEl.textContent = formatTime(remaining);
       timerDisplay.classList.toggle('warning', remaining <= 5);
     },
-    () => advanceQuestion()
+    () => {
+      if (!lockCurrentQuestion({ timedOut: true })) return;
+      queueAdvance();
+    }
   );
 
   state.examTimer = new ExamTimer(
@@ -118,7 +211,7 @@ export function startExam(categoryData, meta) {
   // Setup quiz UI for exam mode
   document.querySelector('.learn-nav').classList.remove('visible');
   document.querySelector('.quiz-back').classList.remove('visible');
-  document.querySelector('.btn-end-exam').classList.add('visible');
+  document.querySelector('.btn-end-exam').classList.remove('visible');
   timerDisplay.classList.remove('warning', 'total-warning');
   totalTimerEl.textContent = formatTime(rules.totalTimeSeconds);
 
@@ -138,8 +231,9 @@ export function startExam(categoryData, meta) {
   keydownHandler = (e) => {
     if (document.getElementById('confirm-modal')?.classList.contains('active')) return;
     if (!state || state.finished) return;
+    if (!state.started) return;
     const item = state.questions[state.currentIndex];
-    if (item.given !== null) return;
+    if (item.given !== null || item.locked) return;
     const key = e.key.toLowerCase();
     const answersDiv = document.querySelector('.answers');
     const isBasic = answersDiv?.classList.contains('yn-answers');
@@ -155,12 +249,11 @@ export function startExam(categoryData, meta) {
   };
   document.addEventListener('keydown', keydownHandler);
 
-  showQuestion();
-  state.examTimer.start();
+  showExamIntroNotice();
 }
 
 function showQuestion() {
-  if (!state || state.finished) return;
+  if (!state || state.finished || !state.started) return;
   window.scrollTo({ top: 0, behavior: 'smooth' });
   const { questions, currentIndex, rules } = state;
   const item = questions[currentIndex];
@@ -188,22 +281,16 @@ function showQuestion() {
 }
 
 function handleAnswer(answer) {
-  if (!state || state.finished) return;
+  if (!lockCurrentQuestion({ answer })) return;
   const item = state.questions[state.currentIndex];
-  if (item.given !== null) return; // Already answered
-
-  item.given = answer;
-  item.isCorrect = answer === item.question.correct;
-
-  state.questionTimer.stop();
 
   // Brief highlight then advance
   highlightAnswer(document.querySelector('.answers'), answer, item.question.correct);
-  setTimeout(() => advanceQuestion(), 600);
+  queueAdvance();
 }
 
 function advanceQuestion() {
-  if (!state || state.finished) return;
+  if (!state || state.finished || !state.started) return;
   state.currentIndex++;
   if (state.currentIndex >= state.questions.length) {
     finishExam();
@@ -215,8 +302,11 @@ function advanceQuestion() {
 function finishExam() {
   if (!state || state.finished) return;
   state.finished = true;
+  state.introPending = false;
   state.questionTimer.stop();
   state.examTimer.stop();
+  clearPendingAdvance();
+  teardownBeforeUnloadWarning();
   if (keydownHandler) {
     document.removeEventListener('keydown', keydownHandler);
     keydownHandler = null;
@@ -262,7 +352,12 @@ export function refreshExamQuestion() {
 export function setupExamListeners() {
   // End exam button → show modal
   document.querySelector('.btn-end-exam').addEventListener('click', () => {
-    if (state && !state.finished) showConfirmModal(t('confirmExit'), t('confirmExitDesc'), () => finishExam());
+    if (!state || state.finished) return;
+    if (!state.started) {
+      cancelExamIntroIfPending();
+      return;
+    }
+    showConfirmModal(t('confirmExit'), t('confirmExitDesc'), () => finishExam());
   });
 
   // Modal confirm — call generic stored callback
@@ -272,12 +367,14 @@ export function setupExamListeners() {
 
   // Modal cancel
   document.querySelector('.btn-cancel-end').addEventListener('click', () => {
+    if (cancelExamIntroIfPending()) return;
     hideModal();
   });
 
   // Escape key closes modal
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && document.getElementById('confirm-modal').classList.contains('active')) {
+      if (cancelExamIntroIfPending()) return;
       hideModal();
     }
   });
@@ -298,6 +395,8 @@ export function cleanupExam() {
     document.removeEventListener('keydown', keydownHandler);
     keydownHandler = null;
   }
+  clearPendingAdvance();
+  teardownBeforeUnloadWarning();
   removeAnswerDelegate();
   if (state) {
     state.questionTimer?.stop();

@@ -11,6 +11,91 @@ export function showScreen(id) {
 }
 
 let _modalOnConfirm = null;
+let _categorySearchUiInitialized = false;
+let _quizModeUiInitialized = false;
+
+function getCategoryUiCopy() {
+  if (getLang() === 'en') {
+    return {
+      clearSearch: 'Clear category search',
+      searchHint: 'Filter by category letter or vehicle type',
+      searchResults: '{visible} of {total} categories',
+      emptyTitle: 'No matching category',
+      emptyDescription: 'Try another phrase, for example: B, C1 or bus.',
+    };
+  }
+  return {
+    clearSearch: 'Wyczyść wyszukiwanie kategorii',
+    searchHint: 'Filtruj po literze kategorii lub nazwie pojazdu',
+    searchResults: '{visible} z {total} kategorii',
+    emptyTitle: 'Brak pasującej kategorii',
+    emptyDescription: 'Spróbuj innej frazy, np. B, C1 albo autobus.',
+  };
+}
+
+function updateQuizModePill() {
+  const modePill = document.getElementById('quiz-mode-pill');
+  if (!modePill) return;
+  const mode = document.querySelector('.mode-btn.active')?.dataset.mode === 'exam' ? 'exam' : 'learn';
+  modePill.textContent = mode === 'exam' ? t('modeExam') : t('modeLearn');
+  modePill.dataset.mode = mode;
+}
+
+function ensureQuizModeUi() {
+  updateQuizModePill();
+  if (_quizModeUiInitialized) return;
+  document.getElementById('categories')?.addEventListener('click', (event) => {
+    if (!event.target.closest('.mode-btn')) return;
+    requestAnimationFrame(updateQuizModePill);
+  });
+  _quizModeUiInitialized = true;
+}
+
+function updateCategorySearchUi() {
+  const input = document.getElementById('category-search');
+  const clearBtn = document.getElementById('category-search-clear');
+  const statusEl = document.getElementById('category-search-status');
+  const emptyState = document.getElementById('category-empty-state');
+  const emptyTitle = document.getElementById('category-empty-title');
+  const emptyDescription = document.getElementById('category-empty-description');
+  const grid = document.querySelector('.category-grid');
+  if (!input || !clearBtn || !statusEl || !emptyState || !emptyTitle || !emptyDescription || !grid) return;
+
+  const copy = getCategoryUiCopy();
+  const query = input.value.trim();
+  const allCards = [...grid.querySelectorAll('.category-card')].filter(card => !card.hidden);
+  const visibleCards = allCards.filter(card => card.style.display !== 'none');
+  const hasQuery = query.length > 0;
+
+  clearBtn.setAttribute('aria-label', copy.clearSearch);
+  clearBtn.hidden = !hasQuery;
+  statusEl.textContent = hasQuery
+    ? copy.searchResults.replace('{visible}', visibleCards.length).replace('{total}', allCards.length)
+    : copy.searchHint;
+
+  emptyTitle.textContent = copy.emptyTitle;
+  emptyDescription.textContent = copy.emptyDescription;
+  emptyState.hidden = !hasQuery || visibleCards.length > 0;
+}
+
+function ensureCategorySearchUi() {
+  const input = document.getElementById('category-search');
+  const clearBtn = document.getElementById('category-search-clear');
+  if (!input || !clearBtn) return;
+
+  if (!_categorySearchUiInitialized) {
+    input.addEventListener('input', () => requestAnimationFrame(updateCategorySearchUi));
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.focus();
+      requestAnimationFrame(updateCategorySearchUi);
+    });
+    _categorySearchUiInitialized = true;
+  }
+
+  updateCategorySearchUi();
+}
 
 export function showConfirmModal(title, description, onConfirm) {
   document.getElementById('modal-title').textContent = title;
@@ -87,6 +172,10 @@ export function renderCategories(meta, downloadedSet = new Set()) {
       dlBtn.classList.toggle('downloaded', isDl);
       dlBtn.textContent = isDl ? `\u2713 ${t('savedOffline')}` : `\u2193 ${t('saveOffline')}`;
     }
+  });
+  requestAnimationFrame(() => {
+    ensureCategorySearchUi();
+    ensureQuizModeUi();
   });
 }
 
@@ -361,4 +450,6 @@ export function applyLanguage() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.dataset.i18n);
   });
+  ensureCategorySearchUi();
+  ensureQuizModeUi();
 }

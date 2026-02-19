@@ -1,7 +1,11 @@
 // learn.js — Learning mode (sequential browsing, no timer, immediate feedback)
 
 import { renderQuestion, highlightAnswer, preloadMedia } from './ui.js';
-import { saveLearnAnswer, getLearnAnswered, getLearnAnswerForQuestion } from './stats.js';
+import {
+  saveLearnAnswer,
+  getLearnAnswerForQuestion,
+  getLearnMetaForQuestion,
+} from './stats.js';
 import { getLang } from './i18n.js';
 
 let state = null;
@@ -35,6 +39,20 @@ let keydownHandler = null;
       opacity: 1;
       transform: translateX(-50%) translateY(0);
     }
+    .learn-queue-toggle {
+      margin-left: 10px;
+      padding: 3px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .learn-queue-toggle.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
   `;
   document.head.appendChild(style);
 })();
@@ -66,21 +84,167 @@ function showResumeToast(currentIndex, total) {
   }, 3000);
 }
 
+function showQueueToast(isWrongOnly) {
+  const existing = document.querySelector('.learn-toast');
+  if (existing) existing.remove();
+
+  const msg = getLang() === 'en'
+    ? (isWrongOnly ? 'Wrong-only mode enabled' : 'All questions mode enabled')
+    : (isWrongOnly ? 'Włączono tryb tylko błędne' : 'Włączono tryb wszystkie pytania');
+
+  const toast = document.createElement('div');
+  toast.className = 'learn-toast';
+  toast.textContent = msg;
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add('visible');
+  });
+
+  setTimeout(() => {
+    toast.classList.remove('visible');
+    setTimeout(() => toast.remove(), 300);
+  }, 1800);
+}
+
+function showNoWrongQuestionsToast() {
+  const existing = document.querySelector('.learn-toast');
+  if (existing) existing.remove();
+
+  const msg = getLang() === 'en' ? 'No wrong answers yet' : 'Brak błędnych odpowiedzi';
+  const toast = document.createElement('div');
+  toast.className = 'learn-toast';
+  toast.textContent = msg;
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+  document.body.appendChild(toast);
+
+  requestAnimationFrame(() => {
+    toast.classList.add('visible');
+  });
+
+  setTimeout(() => {
+    toast.classList.remove('visible');
+    setTimeout(() => toast.remove(), 300);
+  }, 1800);
+}
+
+function orderAdaptiveQuestions(category, questions) {
+  const now = Date.now();
+  const due = [];
+  const incorrect = [];
+  const unseen = [];
+  const rest = [];
+
+  questions.forEach((q) => {
+    const answer = getLearnAnswerForQuestion(category, q.id);
+    const meta = getLearnMetaForQuestion(category, q.id);
+    const isDue = Number.isFinite(meta?.dueAt) && meta.dueAt <= now;
+    const isIncorrect = answer !== null && answer !== q.correct;
+    const isUnseen = answer === null;
+
+    if (isDue) due.push(q);
+    if (isIncorrect) {
+      incorrect.push(q);
+      return;
+    }
+    if (isUnseen) {
+      unseen.push(q);
+      return;
+    }
+    rest.push(q);
+  });
+
+  const seenIds = new Set();
+  const ordered = [];
+  [due, incorrect, unseen, rest].forEach((group) => {
+    group.forEach((q) => {
+      if (seenIds.has(q.id)) return;
+      seenIds.add(q.id);
+      ordered.push(q);
+    });
+  });
+
+  return ordered.length ? ordered : [...questions];
+}
+
+function getCurrentQuestionId() {
+  return state?.questions?.[state.currentIndex]?.id ?? null;
+}
+
+function getKnownAnswer(question) {
+  if (!state || !question) return null;
+  if (state.sessionAnswers.has(question.id)) return state.sessionAnswers.get(question.id);
+  return getLearnAnswerForQuestion(state.category, question.id);
+}
+
+function getWrongOnlyQuestions() {
+  if (!state) return [];
+  return state.baseQuestions.filter(q => {
+    const answer = getKnownAnswer(q);
+    return answer !== null && answer !== q.correct;
+  });
+}
+
+function setQueueMode(mode) {
+  if (!state) return false;
+  const currentQuestionId = getCurrentQuestionId();
+
+  if (mode === 'wrongOnly') {
+    const wrongQuestions = getWrongOnlyQuestions();
+    if (!wrongQuestions.length) return false;
+    state.questions = wrongQuestions;
+  } else {
+    state.questions = [...state.baseQuestions];
+  }
+
+  state.queueMode = mode;
+  const idx = state.questions.findIndex(q => q.id === currentQuestionId);
+  state.currentIndex = idx >= 0 ? idx : 0;
+  showLearnQuestion();
+  updateNavButtons();
+  updateLearnStats();
+  return true;
+}
+
+function toggleQueueMode() {
+  if (!state) return;
+  const nextMode = state.queueMode === 'adaptive' ? 'wrongOnly' : 'adaptive';
+  const didSwitch = setQueueMode(nextMode);
+  if (!didSwitch) {
+    if (nextMode === 'wrongOnly') showNoWrongQuestionsToast();
+    return;
+  }
+  showQueueToast(nextMode === 'wrongOnly');
+}
+
 export function startLearn(categoryData) {
-  const answered = getLearnAnswered(categoryData.category);
+  const orderedQuestions = orderAdaptiveQuestions(categoryData.category, categoryData.questions);
   let startIndex = 0;
-  if (answered.size > 0 && answered.size < categoryData.questions.length) {
-    const idx = categoryData.questions.findIndex(q => !answered.has(q.id));
+  const hasDueOrIncorrect = orderedQuestions.some((q) => {
+    const answer = getLearnAnswerForQuestion(categoryData.category, q.id);
+    const meta = getLearnMetaForQuestion(categoryData.category, q.id);
+    return (answer !== null && answer !== q.correct) || (Number.isFinite(meta?.dueAt) && meta.dueAt <= Date.now());
+  });
+  if (!hasDueOrIncorrect && orderedQuestions.length > 0) {
+    const idx = orderedQuestions.findIndex(q =>
+      getLearnAnswerForQuestion(categoryData.category, q.id) === null
+    );
     if (idx !== -1) startIndex = idx;
   }
 
   state = {
     category: categoryData.category,
-    questions: categoryData.questions,
+    baseQuestions: orderedQuestions,
+    questions: [...orderedQuestions],
     currentIndex: startIndex,
     answered: false,
     correctCount: 0,
     incorrectCount: 0,
+    queueMode: 'adaptive',
+    sessionAnswers: new Map(),
   };
 
   // Show learn nav and back button, hide exam controls
@@ -116,6 +280,12 @@ export function startLearn(categoryData) {
       }
     }
 
+    if (key === 'w') {
+      e.preventDefault();
+      toggleQueueMode();
+      return;
+    }
+
     if (key === 'arrowleft' && state.currentIndex > 0) {
       e.preventDefault();
       state.currentIndex--;
@@ -149,11 +319,17 @@ function updateLearnStats() {
   const incorrect = document.createElement('span');
   incorrect.className = 'learn-stats-incorrect';
   incorrect.textContent = `\u2717 ${state.incorrectCount}`;
-  el.append(correct, incorrect);
+  const queueBtn = document.createElement('button');
+  queueBtn.className = `learn-queue-toggle ${state.queueMode === 'wrongOnly' ? 'active' : ''}`;
+  queueBtn.type = 'button';
+  queueBtn.textContent = getLang() === 'en' ? 'Wrong only' : 'Tylko błędne';
+  queueBtn.addEventListener('click', () => toggleQueueMode());
+  el.append(correct, incorrect, queueBtn);
 }
 
 function showLearnQuestion() {
   if (!state) return;
+  if (!state.questions.length) return;
   window.scrollTo({ top: 0, behavior: 'smooth' });
   state.answered = false;
   state.givenAnswer = null;
@@ -191,9 +367,11 @@ function handleLearnAnswer(answer) {
   state.givenAnswer = answer;
   const q = state.questions[state.currentIndex];
   highlightAnswer(document.querySelector('.answers'), answer, q.correct);
-  saveLearnAnswer(state.category, q.id, answer);
+  const isCorrect = answer === q.correct;
+  saveLearnAnswer(state.category, q.id, answer, isCorrect);
+  state.sessionAnswers.set(q.id, answer);
 
-  if (answer === q.correct) {
+  if (isCorrect) {
     state.correctCount++;
   } else {
     state.incorrectCount++;

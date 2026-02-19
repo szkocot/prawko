@@ -2,6 +2,7 @@
 
 const STORAGE_KEY = 'prawko_stats';
 const LEARN_KEY = 'prawko_learn';
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export function saveResult(result) {
   const history = loadHistory();
@@ -49,7 +50,28 @@ export function getCategoryStats(category) {
   return { attempts: history.length, passed, lastScore };
 }
 
-export function saveLearnAnswer(category, questionId, answer) {
+function normalizeLearnEntry(raw) {
+  if (typeof raw === 'object' && raw !== null && !Array.isArray(raw)) {
+    const answer = typeof raw.answer === 'string' ? raw.answer : null;
+    const streak = Number.isFinite(raw.streak) && raw.streak > 0
+      ? Math.floor(raw.streak)
+      : 0;
+    const dueAt = Number.isFinite(raw.dueAt) ? raw.dueAt : null;
+    return { answer, streak, dueAt };
+  }
+  return {
+    answer: typeof raw === 'string' ? raw : null,
+    streak: 0,
+    dueAt: null,
+  };
+}
+
+function getNextDueAt(streak) {
+  const intervalDays = Math.min(30, 2 ** Math.max(0, streak - 1));
+  return Date.now() + intervalDays * DAY_MS;
+}
+
+export function saveLearnAnswer(category, questionId, answer, isCorrect = null) {
   const data = loadLearnData();
   if (typeof data[category] !== 'object' || Array.isArray(data[category])) {
     // Migrate from old array format
@@ -57,7 +79,23 @@ export function saveLearnAnswer(category, questionId, answer) {
     data[category] = {};
     oldArr.forEach(id => { data[category][id] = null; });
   }
-  data[category][questionId] = answer || null;
+
+  const prevEntry = normalizeLearnEntry(data[category][questionId]);
+  const nextEntry = {
+    answer: answer || null,
+    streak: prevEntry.streak,
+    dueAt: prevEntry.dueAt,
+  };
+
+  if (isCorrect === true) {
+    nextEntry.streak = prevEntry.streak + 1;
+    nextEntry.dueAt = getNextDueAt(nextEntry.streak);
+  } else if (isCorrect === false) {
+    nextEntry.streak = 0;
+    nextEntry.dueAt = Date.now();
+  }
+
+  data[category][questionId] = nextEntry;
   try {
     localStorage.setItem(LEARN_KEY, JSON.stringify(data));
     return true;
@@ -103,5 +141,14 @@ export function getLearnAnswerForQuestion(category, questionId) {
   const data = loadLearnData();
   const catData = data[category];
   if (!catData || Array.isArray(catData)) return null;
-  return catData[questionId] ?? null;
+  return normalizeLearnEntry(catData[questionId]).answer;
+}
+
+export function getLearnMetaForQuestion(category, questionId) {
+  const data = loadLearnData();
+  const catData = data[category];
+  if (!catData || Array.isArray(catData)) return null;
+  const entry = normalizeLearnEntry(catData[questionId]);
+  if (entry.answer === null && entry.streak === 0 && entry.dueAt === null) return null;
+  return { streak: entry.streak, dueAt: entry.dueAt };
 }

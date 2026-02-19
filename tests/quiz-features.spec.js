@@ -20,7 +20,10 @@ async function startExamMode(page) {
   await page.waitForSelector('#categories.active');
   await page.click('.mode-btn[data-mode="exam"]');
   await page.click('.category-card[data-category="PT"]');
+  await page.waitForSelector('.modal-overlay.active');
+  await page.click('.btn-confirm-end');
   await page.waitForSelector('#quiz.active');
+  await page.waitForSelector('.question-text:not(:empty)');
 }
 
 test.describe('Results screen back button', () => {
@@ -40,7 +43,6 @@ test.describe('Results screen back button', () => {
     await startExamMode(page);
 
     // Wait for first question, then end exam via the end button + confirm
-    await page.waitForSelector('.question-text:not(:empty)');
     await page.click('.btn-end-exam');
     await page.waitForSelector('.modal-overlay.active');
     await page.click('.btn-confirm-end');

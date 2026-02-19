@@ -96,6 +96,8 @@ const translations = {
     modeLearnDesc: 'Ucz się we własnym tempie z natychmiastową informacją zwrotną',
     modeExamDesc: 'Symulacja 32 pytań z limitem czasu i punktacją',
     mediaUnavailable: 'Multimedia niedostępne',
+    examIntroTitle: 'Zanim zaczniesz egzamin',
+    examIntroDesc: 'Tryb egzaminu jest rygorystyczny: nie można wracać do pytań ani zmieniać odpowiedzi po jej udzieleniu lub po upływie czasu.',
   },
   en: {
     appName: 'Prawko',
@@ -192,6 +194,8 @@ const translations = {
     modeLearnDesc: 'Study at your own pace with instant feedback',
     modeExamDesc: '32-question simulation with time limit and scoring',
     mediaUnavailable: 'Media unavailable',
+    examIntroTitle: 'Before you start the exam',
+    examIntroDesc: 'Exam mode is strict: you cannot return to questions or edit answers after submitting or after the timer expires.',
   },
 };
 
