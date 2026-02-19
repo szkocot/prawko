@@ -97,9 +97,21 @@ function ensureCategorySearchUi() {
   updateCategorySearchUi();
 }
 
-export function showConfirmModal(title, description, onConfirm) {
+export function showConfirmModal(title, description, onConfirm, options = {}) {
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-desc').textContent = description;
+
+  const confirmBtn = document.querySelector('.btn-confirm-end');
+  const cancelBtn = document.querySelector('.btn-cancel-end');
+  if (confirmBtn) {
+    confirmBtn.textContent = options.confirmLabel || t('confirmYes');
+    confirmBtn.classList.remove('btn-danger', 'btn-secondary');
+    confirmBtn.classList.add(options.confirmVariant === 'secondary' ? 'btn-secondary' : 'btn-danger');
+  }
+  if (cancelBtn) {
+    cancelBtn.textContent = options.cancelLabel || t('confirmNo');
+  }
+
   _modalOnConfirm = onConfirm;
   const modal = document.getElementById('confirm-modal');
   modal.classList.add('active');

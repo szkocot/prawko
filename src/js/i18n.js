@@ -71,6 +71,8 @@ const translations = {
     confirmExitDesc: 'Twój postęp nie zostanie zapisany.',
     confirmYes: 'Tak, zakończ',
     confirmNo: 'Nie, kontynuuj',
+    confirmYesContinue: 'Tak, kontynuuj',
+    confirmNoFinish: 'Nie, zakończ',
     dataSourceTitle: 'Źródło danych',
     dataSourceIntro: 'Pytania egzaminacyjne wykorzystane w tej aplikacji pochodzą z oficjalnej bazy danych udostępnionej przez',
     dataSourceMinistry: 'Ministerstwo Infrastruktury',
@@ -99,6 +101,8 @@ const translations = {
     mediaUnavailable: 'Multimedia niedostępne',
     examIntroTitle: 'Zanim zaczniesz egzamin',
     examIntroDesc: 'Tryb egzaminu jest rygorystyczny: nie można wracać do pytań ani zmieniać odpowiedzi po jej udzieleniu lub po upływie czasu.',
+    examIntroStart: 'Rozpocznij egzamin',
+    examIntroCancel: 'Wróć',
   },
   en: {
     appName: 'Prawko',
@@ -170,6 +174,8 @@ const translations = {
     confirmExitDesc: 'Your progress will not be saved.',
     confirmYes: 'Yes, finish',
     confirmNo: 'No, continue',
+    confirmYesContinue: 'Yes, continue',
+    confirmNoFinish: 'No, finish',
     dataSourceTitle: 'Data Source',
     dataSourceIntro: 'The exam questions used in this app come from the official database published by the',
     dataSourceMinistry: 'Ministry of Infrastructure',
@@ -198,6 +204,8 @@ const translations = {
     mediaUnavailable: 'Media unavailable',
     examIntroTitle: 'Before you start the exam',
     examIntroDesc: 'Exam mode is strict: you cannot return to questions or edit answers after submitting or after the timer expires.',
+    examIntroStart: 'Start exam',
+    examIntroCancel: 'Go back',
   },
 };
 

@@ -105,15 +105,24 @@ function showExamIntroNotice() {
   if (!state || state.finished) return;
   state.introPending = true;
   const introDesc = `${t('examIntroDesc')} ${t('modeExamDesc')}.`;
-  showConfirmModal(t('examIntroTitle'), introDesc, () => {
-    if (!state || state.finished) return;
-    state.introPending = false;
-    state.started = true;
-    document.querySelector('.btn-end-exam').classList.add('visible');
-    setupBeforeUnloadWarning();
-    showQuestion();
-    state.examTimer.start();
-  });
+  showConfirmModal(
+    t('examIntroTitle'),
+    introDesc,
+    () => {
+      if (!state || state.finished) return;
+      state.introPending = false;
+      state.started = true;
+      document.querySelector('.btn-end-exam').classList.add('visible');
+      setupBeforeUnloadWarning();
+      showQuestion();
+      state.examTimer.start();
+    },
+    {
+      confirmLabel: t('examIntroStart'),
+      cancelLabel: t('examIntroCancel'),
+      confirmVariant: 'secondary',
+    }
+  );
 }
 
 export function startExam(categoryData, meta) {
@@ -357,7 +366,16 @@ export function setupExamListeners() {
       cancelExamIntroIfPending();
       return;
     }
-    showConfirmModal(t('confirmExit'), t('confirmExitDesc'), () => finishExam());
+    showConfirmModal(
+      t('confirmExit'),
+      t('confirmExitDesc'),
+      () => finishExam(),
+      {
+        confirmLabel: t('confirmNoFinish'),
+        cancelLabel: t('confirmYesContinue'),
+        confirmVariant: 'danger',
+      }
+    );
   });
 
   // Modal confirm — call generic stored callback
