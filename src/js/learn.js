@@ -10,6 +10,7 @@ import { getLang } from './i18n.js';
 
 let state = null;
 let keydownHandler = null;
+const QUEUE_MODE_KEY = 'prawko_learn_queue_mode';
 
 // Inject toast styles once
 (function injectToastStyles() {
@@ -188,6 +189,25 @@ function getWrongOnlyQuestions() {
   });
 }
 
+function loadQueueModePreference(category) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(QUEUE_MODE_KEY) || '{}');
+    if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return 'adaptive';
+    return raw[category] === 'wrongOnly' ? 'wrongOnly' : 'adaptive';
+  } catch {
+    return 'adaptive';
+  }
+}
+
+function saveQueueModePreference(category, mode) {
+  try {
+    const raw = JSON.parse(localStorage.getItem(QUEUE_MODE_KEY) || '{}');
+    const next = (typeof raw === 'object' && raw && !Array.isArray(raw)) ? raw : {};
+    next[category] = mode === 'wrongOnly' ? 'wrongOnly' : 'adaptive';
+    localStorage.setItem(QUEUE_MODE_KEY, JSON.stringify(next));
+  } catch {}
+}
+
 function setQueueMode(mode) {
   if (!state) return false;
   const currentQuestionId = getCurrentQuestionId();
@@ -201,6 +221,7 @@ function setQueueMode(mode) {
   }
 
   state.queueMode = mode;
+  saveQueueModePreference(state.category, mode);
   const idx = state.questions.findIndex(q => q.id === currentQuestionId);
   state.currentIndex = idx >= 0 ? idx : 0;
   showLearnQuestion();
@@ -221,6 +242,7 @@ function toggleQueueMode() {
 }
 
 export function startLearn(categoryData) {
+  const preferredMode = loadQueueModePreference(categoryData.category);
   const orderedQuestions = orderAdaptiveQuestions(categoryData.category, categoryData.questions);
   let startIndex = 0;
   const hasDueOrIncorrect = orderedQuestions.some((q) => {
@@ -246,6 +268,17 @@ export function startLearn(categoryData) {
     queueMode: 'adaptive',
     sessionAnswers: new Map(),
   };
+
+  if (preferredMode === 'wrongOnly') {
+    const wrongOnly = getWrongOnlyQuestions();
+    if (wrongOnly.length) {
+      state.questions = wrongOnly;
+      state.queueMode = 'wrongOnly';
+      state.currentIndex = 0;
+    } else {
+      saveQueueModePreference(categoryData.category, 'adaptive');
+    }
+  }
 
   // Show learn nav and back button, hide exam controls
   document.querySelector('.learn-nav').classList.add('visible');

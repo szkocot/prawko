@@ -13,6 +13,7 @@ let currentMode = 'learn'; // 'learn' or 'exam'
 let pendingCategory = null;
 const RECENT_CATEGORIES_KEY = 'prawko_recent_categories';
 const RECENT_CATEGORIES_LIMIT = 4;
+const EXAM_SKIN_KEY = 'prawko_exam_skin';
 
 // ---- Router ----
 function navigate(screen) {
@@ -196,6 +197,23 @@ function applyTheme(theme, themeIcon, themeBtn) {
   if (themeBtn) themeBtn.setAttribute('aria-pressed', isDark ? 'true' : 'false');
 }
 
+function getInitialExamSkin() {
+  try {
+    return localStorage.getItem(EXAM_SKIN_KEY) === 'strict';
+  } catch {
+    return false;
+  }
+}
+
+function applyExamSkin(enabled, examSkinBtn) {
+  if (enabled) document.documentElement.setAttribute('data-exam-skin', 'strict');
+  else document.documentElement.removeAttribute('data-exam-skin');
+  if (!examSkinBtn) return;
+  examSkinBtn.setAttribute('aria-pressed', enabled ? 'true' : 'false');
+  examSkinBtn.classList.toggle('active', enabled);
+  examSkinBtn.setAttribute('aria-label', enabled ? `${t('examSkin')}: on` : `${t('examSkin')}: off`);
+}
+
 function showUpdateBanner() {
   const banner = document.getElementById('update-banner');
   if (banner) banner.style.display = '';
@@ -275,12 +293,20 @@ async function init() {
   // Theme toggle
   const themeBtn = document.querySelector('.theme-btn');
   const themeIcon = themeBtn?.querySelector('.theme-icon');
+  const examSkinBtn = document.querySelector('.exam-skin-btn');
   applyTheme(getInitialTheme(), themeIcon, themeBtn);
+  applyExamSkin(getInitialExamSkin(), examSkinBtn);
   themeBtn?.addEventListener('click', () => {
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     const nextTheme = isDark ? 'light' : 'dark';
     applyTheme(nextTheme, themeIcon, themeBtn);
     try { localStorage.setItem('prawko_theme', nextTheme); } catch {}
+  });
+  examSkinBtn?.addEventListener('click', () => {
+    const isEnabled = document.documentElement.getAttribute('data-exam-skin') === 'strict';
+    const nextEnabled = !isEnabled;
+    applyExamSkin(nextEnabled, examSkinBtn);
+    try { localStorage.setItem(EXAM_SKIN_KEY, nextEnabled ? 'strict' : 'default'); } catch {}
   });
 
   // Language toggle
@@ -297,6 +323,7 @@ async function init() {
       updateLanguageButtons(lang);
       setLang(lang);
       applyLanguage();
+      applyExamSkin(document.documentElement.getAttribute('data-exam-skin') === 'strict', examSkinBtn);
       renderCategories(meta, getDownloadedCategories());
       syncCategoryCardVisibility();
       renderRecentCategories();

@@ -371,6 +371,30 @@ section.active {
   background: var(--border);
 }
 
+.exam-skin-btn {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  min-height: 36px;
+  padding: 0 10px;
+  transition: border-color var(--duration-fast), color var(--duration-fast), background-color var(--duration-fast);
+}
+
+.exam-skin-btn:hover {
+  color: var(--text);
+  border-color: var(--text-secondary);
+}
+
+.exam-skin-btn.active {
+  color: #ffffff;
+  border-color: #92400e;
+  background: var(--accent-warm);
+}
+
 .theme-icon {
   width: 20px;
   height: 20px;
@@ -2047,6 +2071,48 @@ button:focus-visible,
   color: var(--danger);
 }
 
+/* Strict exam visual skin */
+:root[data-exam-skin="strict"] body {
+  background-image: none;
+}
+
+:root[data-exam-skin="strict"] body::before {
+  display: none;
+}
+
+:root[data-exam-skin="strict"] .quiz-header {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+:root[data-exam-skin="strict"] .progress-fill {
+  background: var(--text);
+}
+
+:root[data-exam-skin="strict"] .progress-fill::after {
+  display: none;
+}
+
+:root[data-exam-skin="strict"] .question-card,
+:root[data-exam-skin="strict"] .score-breakdown,
+:root[data-exam-skin="strict"] .incorrect-list,
+:root[data-exam-skin="strict"] .history-item {
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+:root[data-exam-skin="strict"] .answer-btn {
+  border-radius: 8px;
+  border-width: 2px;
+  box-shadow: none;
+}
+
+:root[data-exam-skin="strict"] .answer-btn:hover {
+  background: var(--bg-card);
+  border-color: var(--text);
+}
+
 /* ==========================================================================
    #history — Exam History Screen
    ========================================================================== */
@@ -2135,6 +2201,15 @@ button:focus-visible,
    Responsive — Narrow (<480px)
    ========================================================================== */
 @media (max-width: 479px) {
+  .top-controls {
+    gap: 6px;
+  }
+
+  .exam-skin-btn {
+    font-size: 0.68rem;
+    padding: 0 8px;
+  }
+
   .features-grid,
   .features {
     grid-template-columns: 1fr;
