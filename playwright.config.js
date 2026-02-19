@@ -5,6 +5,7 @@ module.exports = defineConfig({
   use: {
     baseURL: 'http://localhost:3333',
     screenshot: 'on',
+    serviceWorkers: 'block',
   },
   webServer: {
     command: 'python3 -m http.server 3333 -d src',
